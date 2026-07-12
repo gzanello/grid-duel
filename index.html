@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Duel</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --panel:#1e293b;
+    --accent:#38bdf8;
+    --player:#3b82f6;
+    --computer:#ef4444;
+    --text:#f1f5f9;
+    --muted:#94a3b8;
+    --valid:#22c55e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Tahoma,Geneva,sans-serif;
+    background:linear-gradient(160deg,#0f172a,#1e293b);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .screen{display:none;}
+  .screen.active{display:flex;}
+  #menu-screen{flex-direction:column;align-items:center;gap:18px;text-align:center;max-width:480px;}
+  h1{font-size:2.2em;margin-bottom:0;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .subtitle{color:var(--muted);margin-top:-8px;}
+  .difficulty-options{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .diff-btn, .size-btn{
+    padding:12px 20px;border-radius:10px;border:2px solid transparent;
+    background:var(--panel);color:var(--text);cursor:pointer;font-size:1em;
+    transition:all .15s;
+  }
+  .diff-btn.selected, .size-btn.selected{border-color:var(--accent);background:#27405c;}
+  .diff-btn:hover, .size-btn:hover{transform:translateY(-2px);}
+  .btn-primary{
+    padding:14px 32px;border-radius:10px;border:none;
+    background:linear-gradient(90deg,#38bdf8,#818cf8);
+    color:#0f172a;font-weight:700;font-size:1.1em;cursor:pointer;
+    transition:transform .15s;
+  }
+  .btn-primary:hover{transform:translateY(-2px);}
+  .btn-secondary{
+    padding:10px 22px;border-radius:10px;border:1px solid var(--muted);
+    background:transparent;color:var(--text);cursor:pointer;font-size:.95em;
+  }
+  .btn-secondary:hover{background:var(--panel);}
+  .menu-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .sound-row{color:var(--muted);font-size:.85em;display:flex;gap:6px;align-items:center;}
+  .settings-body{margin:16px 0;}
+  .settings-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:14px 0;color:var(--text);font-size:.95em;}
+  #language-select{background:var(--panel);color:var(--text);border:1px solid var(--muted);border-radius:8px;padding:6px 10px;font-size:.95em;}
+
+  #game-screen{flex-direction:column;align-items:center;gap:14px;}
+  .scoreboard{display:flex;gap:32px;align-items:center;justify-content:center;}
+  .score-card{
+    padding:10px 22px;border-radius:12px;background:var(--panel);
+    text-align:center;min-width:120px;border:2px solid transparent;
+    transition:border-color .2s;
+  }
+  .score-card.active-turn{border-color:var(--accent);}
+  .score-card .label{font-size:.78em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .score-card .value{font-size:1.8em;font-weight:700;}
+  .score-card.player .value{color:var(--player);}
+  .score-card.computer .value{color:var(--computer);}
+
+  #status-msg{min-height:22px;color:var(--muted);font-size:.95em;text-align:center;}
+
+  #board{
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(8,1fr);
+    gap:5px;
+    width:min(90vw,520px);
+    height:min(90vw,520px);
+    background:var(--panel);
+    padding:8px;
+    border-radius:12px;
+  }
+  .cell{
+    display:flex;align-items:center;justify-content:center;
+    background:#334155;color:var(--text);
+    border-radius:6px;font-weight:600;font-size:clamp(12px,2.2vw,18px);
+    cursor:default;user-select:none;
+    transition:transform .12s,background .2s,box-shadow .2s;
+  }
+  .cell.valid{
+    background:#166534;
+    box-shadow:0 0 0 2px var(--valid);
+    cursor:pointer;
+  }
+  .cell.valid:hover{transform:scale(1.06);}
+  .cell.claimed-player{background:var(--player);color:#fff;}
+  .cell.claimed-computer{background:var(--computer);color:#fff;}
+  .cell.last-move{box-shadow:0 0 0 3px #f59e0b, 0 0 12px 2px rgba(245,158,11,.65);}
+  .cell.hint{box-shadow:0 0 0 3px #a855f7, 0 0 14px 4px rgba(168,85,247,.6);}
+  #board.size-6 .cell{font-size:clamp(15px,3.4vw,24px);}
+  #board.size-8 .cell{font-size:clamp(12px,2.2vw,18px);}
+  #board.size-10 .cell{font-size:clamp(10px,1.7vw,15px);}
+  .cell.pop{animation:pop .3s ease;}
+  @keyframes pop{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.25);}
+    100%{transform:scale(1);}
+  }
+  .cell.shake{animation:shake .3s ease;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-4px);}
+    75%{transform:translateX(4px);}
+  }
+
+  .game-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+
+  .game-area{display:flex;gap:16px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+  #move-log-panel{
+    background:var(--panel);border-radius:12px;padding:12px 16px;
+    width:200px;max-height:min(90vw,520px);overflow-y:auto;
+  }
+  #move-log-panel h3{margin:0 0 8px;font-size:.85em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  #move-log{list-style:none;margin:0;padding:0;font-size:.82em;}
+  #move-log li{padding:4px 8px;border-radius:6px;margin-bottom:3px;display:flex;justify-content:space-between;gap:8px;}
+  #move-log li.player{background:rgba(59,130,246,.15);color:var(--player);}
+  #move-log li.computer{background:rgba(239,68,68,.15);color:var(--computer);}
+  #size-badge{color:var(--muted);font-size:.85em;}
+
+  #overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.65);
+    display:none;align-items:center;justify-content:center;z-index:50;
+    padding:20px;
+  }
+  #overlay.active{display:flex;}
+  .modal{
+    background:var(--panel);border-radius:14px;padding:28px;max-width:420px;
+    text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .modal h2{margin-top:0;}
+  .final-scores{display:flex;justify-content:center;gap:30px;margin:16px 0;}
+  .final-scores .fscore{font-weight:700;font-size:1.6em;}
+  .final-scores .flabel{color:var(--muted);font-size:.85em;}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+
+  #rules-modal .rules-body{text-align:left;color:var(--muted);font-size:.95em;line-height:1.55;max-height:50vh;overflow-y:auto;}
+  #rules-modal .rules-body p{margin:8px 0;}
+
+  .icon-btn{
+    background:none;border:1px solid var(--muted);color:var(--text);
+    border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.9em;
+  }
+  .icon-btn:hover{background:var(--panel);}
+</style>
+</head>
+<body>
+
+  <div id="menu-screen" class="screen active">
+    <h1>Grid Duel</h1>
+    <p class="subtitle" data-i18n="subtitle">A number-grid strategy game vs. the computer</p>
+    <div>
+      <p style="margin-bottom:8px;color:var(--muted);" data-i18n="boardSizeLabel">Board size</p>
+      <div class="difficulty-options">
+        <button class="size-btn" data-size="6">6&times;6</button>
+        <button class="size-btn selected" data-size="8">8&times;8</button>
+        <button class="size-btn" data-size="10">10&times;10</button>
+      </div>
+    </div>
+    <div>
+      <p style="margin-bottom:8px;color:var(--muted);" data-i18n="chooseDifficulty">Choose difficulty</p>
+      <div class="difficulty-options">
+        <button class="diff-btn" data-diff="easy" data-i18n="easy">Easy</button>
+        <button class="diff-btn selected" data-diff="medium" data-i18n="medium">Medium</button>
+        <button class="diff-btn" data-diff="hard" data-i18n="hard">Hard</button>
+      </div>
+    </div>
+    <div class="menu-actions">
+      <button class="btn-primary" id="start-btn" data-i18n="startBtn">Start Game</button>
+      <button class="btn-secondary" id="rules-btn-menu" data-i18n="rulesBtn">How to Play</button>
+      <button class="btn-secondary" id="settings-btn-menu" data-i18n="settingsBtn">Settings</button>
+    </div>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <div class="scoreboard">
+      <div class="score-card player" id="player-card">
+        <div class="label" data-i18n="you">You</div>
+        <div class="value" id="player-score">0</div>
+      </div>
+      <div style="color:var(--muted);font-size:1.3em;" data-i18n="vs">vs</div>
+      <div class="score-card computer" id="computer-card">
+        <div class="label"><span data-i18n="computer">Computer</span> (<span id="diff-label">Medium</span>)</div>
+        <div class="value" id="computer-score">0</div>
+      </div>
+    </div>
+    <div id="status-msg" data-i18n="statusPickBegin">Pick any square to begin.</div>
+    <div id="size-badge">Board: 8x8</div>
+    <div class="game-area">
+      <div id="board"></div>
+      <div id="move-log-panel">
+        <h3 data-i18n="moveLogTitle">Move Log</h3>
+        <ol id="move-log"></ol>
+      </div>
+    </div>
+    <div class="game-controls">
+      <button class="icon-btn" id="hint-btn" data-i18n="hintBtn">Hint</button>
+      <button class="icon-btn" id="rules-btn-game" data-i18n="rulesBtnLabel">Rules</button>
+      <button class="icon-btn" id="settings-btn-game" data-i18n="settingsBtn">Settings</button>
+      <button class="icon-btn" id="restart-btn" data-i18n="restartBtn">Restart</button>
+      <button class="icon-btn" id="menu-btn" data-i18n="menuBtn">Main Menu</button>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <div class="modal" id="end-modal">
+      <h2 id="end-title">Game Over</h2>
+      <p id="end-reason" style="color:var(--muted);"></p>
+      <div class="final-scores">
+        <div><div class="fscore" style="color:var(--player);" id="final-player">0</div><div class="flabel" data-i18n="you">You</div></div>
+        <div><div class="fscore" style="color:var(--computer);" id="final-computer">0</div><div class="flabel" data-i18n="computer">Computer</div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="rematch-btn" data-i18n="playAgainBtn">Play Again</button>
+        <button class="btn-secondary" id="end-menu-btn" data-i18n="menuBtn">Main Menu</button>
+      </div>
+    </div>
+    <div class="modal" id="rules-modal" style="display:none;">
+      <h2 data-i18n="rulesModalTitle">How to Play</h2>
+      <div class="rules-body"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="close-rules-btn" data-i18n="closeRulesBtn">Got it</button>
+      </div>
+    </div>
+    <div class="modal" id="settings-modal" style="display:none;">
+      <h2 data-i18n="settingsTitle">Settings</h2>
+      <div class="settings-body">
+        <div class="settings-row">
+          <span data-i18n="languageLabel">Language</span>
+          <select id="language-select">
+            <option value="en">English</option>
+            <option value="it">Italiano</option>
+            <option value="fr">Fran&ccedil;ais</option>
+            <option value="es">Espa&ntilde;ol</option>
+          </select>
+        </div>
+        <label class="settings-row">
+          <span data-i18n="soundLabel">Sound effects</span>
+          <input type="checkbox" id="sound-toggle" checked>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="close-settings-btn" data-i18n="closeSettingsBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+
+  let boardSize = 8; // 6, 8, or 10
+
+  let board = [];       // N x N numbers 1-N*N
+  let claimed = [];      // N x N of null | 'player' | 'computer'
+  let cellEls = [];       // N x N DOM refs
+  let currentTurn = 'player';
+  let lastMove = null;    // {row,col}
+  let lastMoveEl = null;   // DOM ref for last-move highlight
+  let nextConstraint = null; // null | 'row' | 'column'
+  let difficulty = 'medium';
+  let playerScore = 0, computerScore = 0;
+  let soundOn = true;
+  let gameActive = false;
+  let audioCtx = null;
+  let currentLang = 'en';
+
+  const TRANSLATIONS = {
+    en: {
+      subtitle: "A number-grid strategy game vs. the computer",
+      boardSizeLabel: "Board size",
+      chooseDifficulty: "Choose difficulty",
+      easy: "Easy", medium: "Medium", hard: "Hard",
+      startBtn: "Start Game",
+      rulesBtn: "How to Play",
+      settingsBtn: "Settings",
+      settingsTitle: "Settings",
+      languageLabel: "Language",
+      soundLabel: "Sound effects",
+      closeSettingsBtn: "Done",
+      you: "You",
+      computer: "Computer",
+      vs: "vs",
+      statusPickBegin: "Pick any square to begin.",
+      statusYourTurn: "Your turn — pick a number from the highlighted {constraint}.",
+      statusComputerThinking: "Computer is thinking...",
+      row: "row",
+      column: "column",
+      boardBadge: "Board: {size}x{size}",
+      hintBtn: "Hint",
+      rulesBtnLabel: "Rules",
+      restartBtn: "Restart",
+      menuBtn: "Main Menu",
+      youWin: "You Win!",
+      computerWins: "Computer Wins!",
+      tie: "It's a Tie!",
+      reasonFull: "The board is completely filled.",
+      reasonDeadEnd: "No legal moves remain in the required row/column.",
+      playAgainBtn: "Play Again",
+      rulesModalTitle: "How to Play",
+      ruleBoardLabel: "Board:",
+      ruleBoardText: "A grid (6×6, 8×8, or 10×10, your choice) holds the numbers 1 through the total number of squares, shuffled randomly.",
+      ruleFirstLabel: "First move:",
+      ruleFirstText: "You go first and may pick any square.",
+      ruleAltLabel: "Alternating constraint:",
+      ruleAltText: "After that, each pick must come from the same column as the last picked square, then the same row, then column again — alternating every turn.",
+      ruleClaimLabel: "Claiming:",
+      ruleClaimText: "Each picked square is removed from play and its value is added to that player's score.",
+      ruleEndLabel: "Game end:",
+      ruleEndText: "If it's a player's turn and there are no legal unclaimed squares left in the required row/column, the game ends immediately. Whoever has the higher total score at that moment wins.",
+      ruleDiffLabel: "Difficulty:",
+      ruleDiffText: "Easy picks randomly, Medium always grabs the highest legal number, Hard thinks several moves ahead.",
+      ruleHintLabel: "Hint:",
+      ruleHintText: "On your turn, press Hint to highlight the move the same deep-search logic (as used by Hard) recommends for you.",
+      closeRulesBtn: "Got it",
+      moveLogTitle: "Move Log"
+    },
+    it: {
+      subtitle: "Un gioco di strategia su griglia numerica contro il computer",
+      boardSizeLabel: "Dimensione griglia",
+      chooseDifficulty: "Scegli la difficoltà",
+      easy: "Facile", medium: "Medio", hard: "Difficile",
+      startBtn: "Inizia partita",
+      rulesBtn: "Come si gioca",
+      settingsBtn: "Impostazioni",
+      settingsTitle: "Impostazioni",
+      languageLabel: "Lingua",
+      soundLabel: "Effetti sonori",
+      closeSettingsBtn: "Fatto",
+      you: "Tu",
+      computer: "Computer",
+      vs: "contro",
+      statusPickBegin: "Scegli una casella qualsiasi per iniziare.",
+      statusYourTurn: "Il tuo turno — scegli un numero dalla {constraint} evidenziata.",
+      statusComputerThinking: "Il computer sta pensando...",
+      row: "riga",
+      column: "colonna",
+      boardBadge: "Griglia: {size}x{size}",
+      hintBtn: "Suggerimento",
+      rulesBtnLabel: "Regole",
+      restartBtn: "Ricomincia",
+      menuBtn: "Menu principale",
+      youWin: "Hai vinto!",
+      computerWins: "Ha vinto il computer!",
+      tie: "Pareggio!",
+      reasonFull: "La griglia è completamente piena.",
+      reasonDeadEnd: "Non ci sono più mosse legali nella riga/colonna richiesta.",
+      playAgainBtn: "Gioca ancora",
+      rulesModalTitle: "Come si gioca",
+      ruleBoardLabel: "Griglia:",
+      ruleBoardText: "Una griglia (6×6, 8×8 o 10×10, a tua scelta) contiene i numeri da 1 al totale delle caselle, mescolati casualmente.",
+      ruleFirstLabel: "Prima mossa:",
+      ruleFirstText: "Inizi tu e puoi scegliere qualsiasi casella.",
+      ruleAltLabel: "Vincolo alternato:",
+      ruleAltText: "Dopo la prima mossa, ogni scelta deve provenire dalla stessa colonna dell'ultima casella scelta, poi dalla stessa riga, poi di nuovo dalla colonna — alternando a ogni turno.",
+      ruleClaimLabel: "Conquista:",
+      ruleClaimText: "Ogni casella scelta viene rimossa dal gioco e il suo valore si aggiunge al punteggio del giocatore.",
+      ruleEndLabel: "Fine partita:",
+      ruleEndText: "Se, al turno di un giocatore, non restano caselle libere legali nella riga/colonna richiesta, la partita termina immediatamente. Vince chi ha il punteggio più alto in quel momento.",
+      ruleDiffLabel: "Difficoltà:",
+      ruleDiffText: "Facile sceglie a caso, Medio prende sempre il numero legale più alto, Difficile pianifica diverse mosse in anticipo.",
+      ruleHintLabel: "Suggerimento:",
+      ruleHintText: "Nel tuo turno, premi Suggerimento per evidenziare la mossa consigliata dalla stessa logica di ricerca approfondita usata dal livello Difficile.",
+      closeRulesBtn: "Ho capito",
+      moveLogTitle: "Registro mosse"
+    },
+    fr: {
+      subtitle: "Un jeu de stratégie sur grille numérique contre l'ordinateur",
+      boardSizeLabel: "Taille de la grille",
+      chooseDifficulty: "Choisissez la difficulté",
+      easy: "Facile", medium: "Moyen", hard: "Difficile",
+      startBtn: "Commencer la partie",
+      rulesBtn: "Comment jouer",
+      settingsBtn: "Paramètres",
+      settingsTitle: "Paramètres",
+      languageLabel: "Langue",
+      soundLabel: "Effets sonores",
+      closeSettingsBtn: "Terminé",
+      you: "Vous",
+      computer: "Ordinateur",
+      vs: "contre",
+      statusPickBegin: "Choisissez une case pour commencer.",
+      statusYourTurn: "À vous — choisissez un numéro dans la {constraint} surlignée.",
+      statusComputerThinking: "L'ordinateur réfléchit...",
+      row: "ligne",
+      column: "colonne",
+      boardBadge: "Grille : {size}x{size}",
+      hintBtn: "Indice",
+      rulesBtnLabel: "Règles",
+      restartBtn: "Recommencer",
+      menuBtn: "Menu principal",
+      youWin: "Vous avez gagné !",
+      computerWins: "L'ordinateur a gagné !",
+      tie: "Match nul !",
+      reasonFull: "La grille est entièrement remplie.",
+      reasonDeadEnd: "Aucun coup légal ne reste dans la ligne/colonne requise.",
+      playAgainBtn: "Rejouer",
+      rulesModalTitle: "Comment jouer",
+      ruleBoardLabel: "Grille :",
+      ruleBoardText: "Une grille (6×6, 8×8 ou 10×10, au choix) contient les nombres de 1 au total des cases, mélangés au hasard.",
+      ruleFirstLabel: "Premier coup :",
+      ruleFirstText: "Vous commencez et pouvez choisir n'importe quelle case.",
+      ruleAltLabel: "Contrainte alternée :",
+      ruleAltText: "Ensuite, chaque choix doit provenir de la même colonne que la dernière case choisie, puis de la même ligne, puis à nouveau de la colonne — en alternant à chaque tour.",
+      ruleClaimLabel: "Acquisition :",
+      ruleClaimText: "Chaque case choisie est retirée du jeu et sa valeur s'ajoute au score du joueur.",
+      ruleEndLabel: "Fin de partie :",
+      ruleEndText: "Si, au tour d'un joueur, aucune case libre légale ne reste dans la ligne/colonne requise, la partie se termine immédiatement. Celui qui a le score le plus élevé à ce moment-là gagne.",
+      ruleDiffLabel: "Difficulté :",
+      ruleDiffText: "Facile choisit au hasard, Moyen prend toujours le nombre légal le plus élevé, Difficile réfléchit plusieurs coups à l'avance.",
+      ruleHintLabel: "Indice :",
+      ruleHintText: "À votre tour, appuyez sur Indice pour surligner le coup recommandé par la même recherche approfondie que celle utilisée par le niveau Difficile.",
+      closeRulesBtn: "Compris",
+      moveLogTitle: "Journal des coups"
+    },
+    es: {
+      subtitle: "Un juego de estrategia en cuadrícula numérica contra el ordenador",
+      boardSizeLabel: "Tamaño del tablero",
+      chooseDifficulty: "Elige la dificultad",
+      easy: "Fácil", medium: "Medio", hard: "Difícil",
+      startBtn: "Empezar partida",
+      rulesBtn: "Cómo jugar",
+      settingsBtn: "Ajustes",
+      settingsTitle: "Ajustes",
+      languageLabel: "Idioma",
+      soundLabel: "Efectos de sonido",
+      closeSettingsBtn: "Hecho",
+      you: "Tú",
+      computer: "Ordenador",
+      vs: "contra",
+      statusPickBegin: "Elige cualquier casilla para empezar.",
+      statusYourTurn: "Tu turno — elige un número de la {constraint} resaltada.",
+      statusComputerThinking: "El ordenador está pensando...",
+      row: "fila",
+      column: "columna",
+      boardBadge: "Tablero: {size}x{size}",
+      hintBtn: "Pista",
+      rulesBtnLabel: "Reglas",
+      restartBtn: "Reiniciar",
+      menuBtn: "Menú principal",
+      youWin: "¡Has ganado!",
+      computerWins: "¡Ha ganado el ordenador!",
+      tie: "¡Empate!",
+      reasonFull: "El tablero está completamente lleno.",
+      reasonDeadEnd: "No quedan movimientos legales en la fila/columna requerida.",
+      playAgainBtn: "Jugar de nuevo",
+      rulesModalTitle: "Cómo jugar",
+      ruleBoardLabel: "Tablero:",
+      ruleBoardText: "Un tablero (6×6, 8×8 o 10×10, a tu elección) contiene los números del 1 al total de casillas, mezclados al azar.",
+      ruleFirstLabel: "Primer movimiento:",
+      ruleFirstText: "Tú empiezas y puedes elegir cualquier casilla.",
+      ruleAltLabel: "Restricción alterna:",
+      ruleAltText: "Después, cada elección debe provenir de la misma columna que la última casilla elegida, luego de la misma fila, luego de nuevo de la columna, alternando en cada turno.",
+      ruleClaimLabel: "Reclamar:",
+      ruleClaimText: "Cada casilla elegida se retira del juego y su valor se suma a la puntuación de ese jugador.",
+      ruleEndLabel: "Fin de la partida:",
+      ruleEndText: "Si, en el turno de un jugador, no quedan casillas libres legales en la fila/columna requerida, la partida termina de inmediato. Gana quien tenga la puntuación más alta en ese momento.",
+      ruleDiffLabel: "Dificultad:",
+      ruleDiffText: "Fácil elige al azar, Medio siempre toma el número legal más alto, Difícil piensa varios movimientos por adelantado.",
+      ruleHintLabel: "Pista:",
+      ruleHintText: "En tu turno, pulsa Pista para resaltar el movimiento que recomienda la misma búsqueda profunda que usa el nivel Difícil.",
+      closeRulesBtn: "Entendido",
+      moveLogTitle: "Registro de movimientos"
+    }
+  };
+
+  function t(key, vars){
+    let str = (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.en[key] || key;
+    if(vars){
+      Object.keys(vars).forEach(k=>{ str = str.split('{'+k+'}').join(vars[k]); });
+    }
+    return str;
+  }
+
+  function detectLanguage(){
+    const supported=['en','it','fr','es'];
+    const navLangs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+    for(const l of navLangs){
+      const code = l.slice(0,2).toLowerCase();
+      if(supported.includes(code)) return code;
+    }
+    return 'en';
+  }
+
+  function loadSettings(){
+    let stored=null;
+    try{ stored = JSON.parse(localStorage.getItem('gridDuelSettings')||'null'); }catch(e){}
+    if(stored && stored.lang && TRANSLATIONS[stored.lang]) currentLang = stored.lang;
+    else currentLang = detectLanguage();
+    if(stored && typeof stored.sound === 'boolean') soundOn = stored.sound;
+  }
+
+  function saveSettings(){
+    try{ localStorage.setItem('gridDuelSettings', JSON.stringify({lang:currentLang, sound:soundOn})); }catch(e){}
+  }
+
+  function renderRulesBody(){
+    const body = document.querySelector('#rules-modal .rules-body');
+    if(!body) return;
+    const rows = [
+      ['ruleBoardLabel','ruleBoardText'],
+      ['ruleFirstLabel','ruleFirstText'],
+      ['ruleAltLabel','ruleAltText'],
+      ['ruleClaimLabel','ruleClaimText'],
+      ['ruleEndLabel','ruleEndText'],
+      ['ruleDiffLabel','ruleDiffText'],
+      ['ruleHintLabel','ruleHintText']
+    ];
+    body.innerHTML = rows.map(([l,tx])=>`<p><strong>${t(l)}</strong> ${t(tx)}</p>`).join('');
+  }
+
+  function refreshStatusText(){
+    if(!gameActive) return;
+    if(currentTurn==='computer'){
+      setStatus(t('statusComputerThinking'));
+    } else {
+      setStatus(lastMove ? t('statusYourTurn',{constraint:t(nextConstraint)}) : t('statusPickBegin'));
+    }
+  }
+
+  function applyTranslations(){
+    document.documentElement.lang = currentLang;
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    renderRulesBody();
+    const diffLabelEl = document.getElementById('diff-label');
+    if(diffLabelEl) diffLabelEl.textContent = t(difficulty);
+    const sizeBadgeEl = document.getElementById('size-badge');
+    if(sizeBadgeEl) sizeBadgeEl.textContent = t('boardBadge',{size:boardSize});
+    refreshStatusText();
+  }
+
+  function getDepthLimit(){
+    if(boardSize<=6) return 8;
+    if(boardSize===8) return 6;
+    return 5;
+  }
+
+  // ---------- helpers ----------
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+  }
+
+  function initBoardData(){
+    const total = boardSize*boardSize;
+    const nums=[...Array(total).keys()].map(n=>n+1);
+    shuffle(nums);
+    board=[]; claimed=[];
+    for(let r=0;r<boardSize;r++){
+      board.push(nums.slice(r*boardSize,r*boardSize+boardSize));
+      claimed.push(new Array(boardSize).fill(null));
+    }
+  }
+
+  function renderBoard(){
+    const boardEl=document.getElementById('board');
+    boardEl.innerHTML='';
+    boardEl.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+    boardEl.style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
+    boardEl.className = 'size-'+boardSize;
+    cellEls=[];
+    for(let r=0;r<boardSize;r++){
+      const rowEls=[];
+      for(let c=0;c<boardSize;c++){
+        const cell=document.createElement('div');
+        cell.className='cell';
+        cell.textContent=board[r][c];
+        cell.addEventListener('click',(function(rr,cc){return function(){handleCellClick(rr,cc);};})(r,c));
+        boardEl.appendChild(cell);
+        rowEls.push(cell);
+      }
+      cellEls.push(rowEls);
+    }
+  }
+
+  function getValidMoves(){
+    if(!lastMove){
+      const moves=[];
+      for(let r=0;r<boardSize;r++) for(let c=0;c<boardSize;c++) if(!claimed[r][c]) moves.push({row:r,col:c});
+      return moves;
+    }
+    const moves=[];
+    if(nextConstraint==='column'){
+      for(let r=0;r<boardSize;r++) if(!claimed[r][lastMove.col]) moves.push({row:r,col:lastMove.col});
+    } else {
+      for(let c=0;c<boardSize;c++) if(!claimed[lastMove.row][c]) moves.push({row:lastMove.row,col:c});
+    }
+    return moves;
+  }
+
+  function refreshBoardClasses(){
+    for(let r=0;r<boardSize;r++){
+      for(let c=0;c<boardSize;c++){
+        const el=cellEls[r][c];
+        el.classList.remove('valid');
+        el.classList.remove('hint');
+        el.classList.toggle('claimed-player', claimed[r][c]==='player');
+        el.classList.toggle('claimed-computer', claimed[r][c]==='computer');
+      }
+    }
+  }
+
+  function highlightValidMoves(){
+    getValidMoves().forEach(m=>cellEls[m.row][m.col].classList.add('valid'));
+  }
+
+  function animateClaim(row,col){
+    const el=cellEls[row][col];
+    el.classList.add('pop');
+    setTimeout(()=>el.classList.remove('pop'),300);
+  }
+
+  function shakeCell(row,col){
+    const el=cellEls[row][col];
+    el.classList.add('shake');
+    setTimeout(()=>el.classList.remove('shake'),300);
+  }
+
+  function setStatus(msg){
+    document.getElementById('status-msg').textContent=msg;
+  }
+
+  function updateScores(){
+    document.getElementById('player-score').textContent=playerScore;
+    document.getElementById('computer-score').textContent=computerScore;
+    document.getElementById('player-card').classList.toggle('active-turn', currentTurn==='player' && gameActive);
+    document.getElementById('computer-card').classList.toggle('active-turn', currentTurn==='computer' && gameActive);
+  }
+
+  // ---------- game flow ----------
+  function handleCellClick(row,col){
+    if(!gameActive || currentTurn!=='player') return;
+    const valid=getValidMoves();
+    const isValid=valid.some(m=>m.row===row&&m.col===col);
+    if(!isValid){
+      if(!claimed[row][col]){ shakeCell(row,col); playSound('invalid'); }
+      return;
+    }
+    makeMove(row,col,'player');
+  }
+
+  function makeMove(row,col,player){
+    const value = board[row][col];
+    claimed[row][col]=player;
+    if(player==='player') playerScore+=value; else computerScore+=value;
+    lastMove={row,col};
+    nextConstraint=(nextConstraint==='column')?'row':'column';
+    currentTurn = player==='player' ? 'computer' : 'player';
+    refreshBoardClasses();
+    markLastMove(row,col);
+    animateClaim(row,col);
+    logMove(player,value);
+    updateScores();
+    playSound('claim');
+    checkGameState();
+  }
+
+  function markLastMove(row,col){
+    if(lastMoveEl) lastMoveEl.classList.remove('last-move');
+    const el=cellEls[row][col];
+    el.classList.add('last-move');
+    lastMoveEl=el;
+  }
+
+  function logMove(player,value){
+    const list=document.getElementById('move-log');
+    const li=document.createElement('li');
+    li.className=player;
+    const moveNum=list.children.length+1;
+    li.innerHTML = `<span>#${moveNum} ${player==='player'?t('you'):t('computer')}</span><span>${value}</span>`;
+    list.appendChild(li);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function checkGameState(){
+    if(!gameActive) return;
+    const allClaimed = claimed.every(row=>row.every(c=>c!==null));
+    if(allClaimed){ endGame(t('reasonFull')); return; }
+    const moves=getValidMoves();
+    if(moves.length===0){
+      endGame(t('reasonDeadEnd'));
+      return;
+    }
+    refreshBoardClasses();
+    updateScores();
+    if(currentTurn==='computer'){
+      setStatus(t('statusComputerThinking'));
+      setTimeout(computerMove,550);
+    } else {
+      setStatus(lastMove ? t('statusYourTurn',{constraint:t(nextConstraint)}) : t('statusPickBegin'));
+      highlightValidMoves();
+    }
+  }
+
+  function endGame(reason){
+    gameActive=false;
+    document.getElementById('final-player').textContent=playerScore;
+    document.getElementById('final-computer').textContent=computerScore;
+    let title;
+    if(playerScore>computerScore) title=t('youWin');
+    else if(computerScore>playerScore) title=t('computerWins');
+    else title=t('tie');
+    document.getElementById('end-title').textContent=title;
+    document.getElementById('end-reason').textContent=reason;
+    showModal('end-modal');
+    refreshBoardClasses();
+    updateScores();
+    playSound(playerScore>computerScore?'win':(computerScore>playerScore?'lose':'tie'));
+  }
+
+  // ---------- AI ----------
+  function computerMove(){
+    if(!gameActive) return;
+    const moves=getValidMoves();
+    if(moves.length===0){ checkGameState(); return; }
+    let choice;
+    if(difficulty==='easy'){
+      choice = moves[Math.floor(Math.random()*moves.length)];
+    } else if(difficulty==='medium'){
+      choice = moves.reduce((best,m)=> board[m.row][m.col]>board[best.row][best.col] ? m : best, moves[0]);
+    } else {
+      choice = getBestMoveMinimax(moves);
+    }
+    makeMove(choice.row,choice.col,'computer');
+  }
+
+  function cloneClaimedBool(){
+    const c=[];
+    for(let r=0;r<boardSize;r++){
+      c.push([]);
+      for(let col=0;col<boardSize;col++) c[r].push(!!claimed[r][col]);
+    }
+    return c;
+  }
+
+  function getValidMovesForState(claimedBool,lm,nc){
+    if(!lm){
+      const moves=[];
+      for(let r=0;r<boardSize;r++) for(let c=0;c<boardSize;c++) if(!claimedBool[r][c]) moves.push({row:r,col:c});
+      return moves;
+    }
+    const moves=[];
+    if(nc==='column'){
+      for(let r=0;r<boardSize;r++) if(!claimedBool[r][lm.col]) moves.push({row:r,col:lm.col});
+    } else {
+      for(let c=0;c<boardSize;c++) if(!claimedBool[lm.row][c]) moves.push({row:lm.row,col:c});
+    }
+    return moves;
+  }
+
+  function minimax(claimedBool,lm,nc,cScore,pScore,depth,isMax,alpha,beta){
+    const moves=getValidMovesForState(claimedBool,lm,nc);
+    if(moves.length===0 || depth===0){
+      return cScore - pScore;
+    }
+    const ordered=[...moves].sort((a,b)=>board[b.row][b.col]-board[a.row][a.col]);
+    if(isMax){
+      let value=-Infinity;
+      for(const m of ordered){
+        claimedBool[m.row][m.col]=true;
+        const newNc=(nc==='column')?'row':'column';
+        const val=minimax(claimedBool,{row:m.row,col:m.col},newNc,cScore+board[m.row][m.col],pScore,depth-1,false,alpha,beta);
+        claimedBool[m.row][m.col]=false;
+        value=Math.max(value,val);
+        alpha=Math.max(alpha,value);
+        if(alpha>=beta) break;
+      }
+      return value;
+    } else {
+      let value=Infinity;
+      for(const m of ordered){
+        claimedBool[m.row][m.col]=true;
+        const newNc=(nc==='column')?'row':'column';
+        const val=minimax(claimedBool,{row:m.row,col:m.col},newNc,cScore,pScore+board[m.row][m.col],depth-1,true,alpha,beta);
+        claimedBool[m.row][m.col]=false;
+        value=Math.min(value,val);
+        beta=Math.min(beta,value);
+        if(alpha>=beta) break;
+      }
+      return value;
+    }
+  }
+
+  function getBestMoveMinimax(moves){
+    const claimedBool=cloneClaimedBool();
+    let bestScore=-Infinity;
+    let bestMove=moves[0];
+    let alpha=-Infinity, beta=Infinity;
+    const ordered=[...moves].sort((a,b)=>board[b.row][b.col]-board[a.row][a.col]);
+    for(const m of ordered){
+      claimedBool[m.row][m.col]=true;
+      const newNc=(nextConstraint==='column')?'row':'column';
+      const val=minimax(claimedBool,{row:m.row,col:m.col},newNc,
+        computerScore+board[m.row][m.col], playerScore, getDepthLimit()-1, false, alpha, beta);
+      claimedBool[m.row][m.col]=false;
+      if(val>bestScore){ bestScore=val; bestMove=m; }
+      alpha=Math.max(alpha,val);
+    }
+    return bestMove;
+  }
+
+  // Same search as the Hard AI, but evaluated from the player's side: picks
+  // the move that minimizes (computerScore - playerScore), i.e. best for the player.
+  function getHintMove(moves){
+    const claimedBool=cloneClaimedBool();
+    let bestScore=Infinity;
+    let bestMove=moves[0];
+    let alpha=-Infinity, beta=Infinity;
+    const ordered=[...moves].sort((a,b)=>board[b.row][b.col]-board[a.row][a.col]);
+    for(const m of ordered){
+      claimedBool[m.row][m.col]=true;
+      const newNc=(nextConstraint==='column')?'row':'column';
+      const val=minimax(claimedBool,{row:m.row,col:m.col},newNc,
+        computerScore, playerScore+board[m.row][m.col], getDepthLimit()-1, true, alpha, beta);
+      claimedBool[m.row][m.col]=false;
+      if(val<bestScore){ bestScore=val; bestMove=m; }
+      beta=Math.min(beta,val);
+    }
+    return bestMove;
+  }
+
+  // ---------- sound ----------
+  function ensureAudio(){
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+  }
+
+  function playTone(freq,duration,type,vol){
+    if(!soundOn) return;
+    ensureAudio();
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type=type||'sine';
+    osc.frequency.value=freq;
+    gain.gain.value=vol||0.15;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+(duration||0.12));
+    osc.stop(audioCtx.currentTime+(duration||0.12)+0.02);
+  }
+
+  function playSound(kind){
+    if(!soundOn) return;
+    switch(kind){
+      case 'claim': playTone(520,0.1,'triangle',0.15); break;
+      case 'invalid': playTone(140,0.15,'sawtooth',0.12); break;
+      case 'win': [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,'triangle',0.15),i*120)); break;
+      case 'lose': [400,300,220].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sawtooth',0.12),i*150)); break;
+      case 'tie': [400,400].forEach((f,i)=>setTimeout(()=>playTone(f,0.15,'sine',0.13),i*180)); break;
+    }
+  }
+
+  // ---------- screens ----------
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById('overlay').classList.remove('active');
+  }
+
+  function startGame(){
+    initBoardData();
+    renderBoard();
+    playerScore=0; computerScore=0;
+    lastMove=null; nextConstraint=null; lastMoveEl=null;
+    currentTurn='player';
+    gameActive=true;
+    document.getElementById('diff-label').textContent = t(difficulty);
+    document.getElementById('size-badge').textContent = t('boardBadge',{size:boardSize});
+    document.getElementById('move-log').innerHTML = '';
+    showScreen('game-screen');
+    updateScores();
+    checkGameState();
+  }
+
+  // ---------- wire up UI ----------
+  document.querySelectorAll('.diff-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      difficulty=btn.dataset.diff;
+    });
+  });
+
+  document.querySelectorAll('.size-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      boardSize=parseInt(btn.dataset.size,10);
+    });
+  });
+
+  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('restart-btn').addEventListener('click', startGame);
+  document.getElementById('rematch-btn').addEventListener('click', startGame);
+
+  document.getElementById('menu-btn').addEventListener('click', ()=>{ gameActive=false; showScreen('menu-screen'); });
+  document.getElementById('end-menu-btn').addEventListener('click', ()=>{ gameActive=false; showScreen('menu-screen'); });
+
+  function showModal(id){
+    ['end-modal','rules-modal','settings-modal'].forEach(mid=>{
+      document.getElementById(mid).style.display = (mid===id) ? 'block' : 'none';
+    });
+    document.getElementById('overlay').classList.add('active');
+  }
+  function hideOverlay(){
+    document.getElementById('overlay').classList.remove('active');
+  }
+  function openRules(){ renderRulesBody(); showModal('rules-modal'); }
+  function openSettings(){ showModal('settings-modal'); }
+
+  document.getElementById('rules-btn-menu').addEventListener('click', openRules);
+  document.getElementById('rules-btn-game').addEventListener('click', openRules);
+  document.getElementById('close-rules-btn').addEventListener('click', hideOverlay);
+
+  document.getElementById('settings-btn-menu').addEventListener('click', openSettings);
+  document.getElementById('settings-btn-game').addEventListener('click', openSettings);
+  document.getElementById('close-settings-btn').addEventListener('click', hideOverlay);
+
+  document.getElementById('hint-btn').addEventListener('click', ()=>{
+    if(!gameActive || currentTurn!=='player') return;
+    const moves=getValidMoves();
+    if(moves.length===0) return;
+    const hint=getHintMove(moves);
+    document.querySelectorAll('.cell.hint').forEach(el=>el.classList.remove('hint'));
+    cellEls[hint.row][hint.col].classList.add('hint');
+  });
+
+  document.getElementById('sound-toggle').addEventListener('change', (e)=>{
+    soundOn=e.target.checked;
+    saveSettings();
+  });
+
+  document.getElementById('language-select').addEventListener('change', (e)=>{
+    currentLang=e.target.value;
+    saveSettings();
+    applyTranslations();
+  });
+
+  // ---------- init ----------
+  loadSettings();
+  document.getElementById('language-select').value = currentLang;
+  document.getElementById('sound-toggle').checked = soundOn;
+  applyTranslations();
+
+})();
+</script>
+</body>
+</html>
