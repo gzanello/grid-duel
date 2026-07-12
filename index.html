@@ -251,6 +251,10 @@
           <span data-i18n="soundLabel">Sound effects</span>
           <input type="checkbox" id="sound-toggle" checked>
         </label>
+        <label class="settings-row">
+          <span data-i18n="showMoveLogLabel">Show move log</span>
+          <input type="checkbox" id="movelog-toggle" checked>
+        </label>
       </div>
       <div class="modal-actions">
         <button class="btn-primary" id="close-settings-btn" data-i18n="closeSettingsBtn">Done</button>
@@ -274,6 +278,7 @@
   let difficulty = 'medium';
   let playerScore = 0, computerScore = 0;
   let soundOn = true;
+  let showMoveLog = true;
   let gameActive = false;
   let audioCtx = null;
   let currentLang = 'en';
@@ -291,6 +296,7 @@
       languageLabel: "Language",
       soundLabel: "Sound effects",
       closeSettingsBtn: "Done",
+      showMoveLogLabel: "Show move log",
       you: "You",
       computer: "Computer",
       vs: "vs",
@@ -340,6 +346,7 @@
       languageLabel: "Lingua",
       soundLabel: "Effetti sonori",
       closeSettingsBtn: "Fatto",
+      showMoveLogLabel: "Mostra registro mosse",
       you: "Tu",
       computer: "Computer",
       vs: "contro",
@@ -389,6 +396,7 @@
       languageLabel: "Langue",
       soundLabel: "Effets sonores",
       closeSettingsBtn: "Terminé",
+      showMoveLogLabel: "Afficher le journal des coups",
       you: "Vous",
       computer: "Ordinateur",
       vs: "contre",
@@ -438,6 +446,7 @@
       languageLabel: "Idioma",
       soundLabel: "Efectos de sonido",
       closeSettingsBtn: "Hecho",
+      showMoveLogLabel: "Mostrar registro de movimientos",
       you: "Tú",
       computer: "Ordenador",
       vs: "contra",
@@ -501,10 +510,16 @@
     if(stored && stored.lang && TRANSLATIONS[stored.lang]) currentLang = stored.lang;
     else currentLang = detectLanguage();
     if(stored && typeof stored.sound === 'boolean') soundOn = stored.sound;
+    if(stored && typeof stored.showMoveLog === 'boolean') showMoveLog = stored.showMoveLog;
   }
 
   function saveSettings(){
-    try{ localStorage.setItem('gridDuelSettings', JSON.stringify({lang:currentLang, sound:soundOn})); }catch(e){}
+    try{ localStorage.setItem('gridDuelSettings', JSON.stringify({lang:currentLang, sound:soundOn, showMoveLog:showMoveLog})); }catch(e){}
+  }
+
+  function applyMoveLogVisibility(){
+    const panel = document.getElementById('move-log-panel');
+    if(panel) panel.style.display = showMoveLog ? '' : 'none';
   }
 
   function renderRulesBody(){
@@ -884,6 +899,7 @@
     document.getElementById('diff-label').textContent = t(difficulty);
     document.getElementById('size-badge').textContent = t('boardBadge',{size:boardSize});
     document.getElementById('move-log').innerHTML = '';
+    applyMoveLogVisibility();
     showScreen('game-screen');
     updateScores();
     checkGameState();
@@ -947,6 +963,12 @@
     saveSettings();
   });
 
+  document.getElementById('movelog-toggle').addEventListener('change', (e)=>{
+    showMoveLog=e.target.checked;
+    saveSettings();
+    applyMoveLogVisibility();
+  });
+
   document.getElementById('language-select').addEventListener('change', (e)=>{
     currentLang=e.target.value;
     saveSettings();
@@ -957,7 +979,9 @@
   loadSettings();
   document.getElementById('language-select').value = currentLang;
   document.getElementById('sound-toggle').checked = soundOn;
+  document.getElementById('movelog-toggle').checked = showMoveLog;
   applyTranslations();
+  applyMoveLogVisibility();
 
 })();
 </script>
