@@ -253,7 +253,7 @@
         </label>
         <label class="settings-row">
           <span data-i18n="showMoveLogLabel">Show move log</span>
-          <input type="checkbox" id="movelog-toggle" checked>
+          <input type="checkbox" id="movelog-toggle">
         </label>
       </div>
       <div class="modal-actions">
@@ -278,7 +278,7 @@
   let difficulty = 'medium';
   let playerScore = 0, computerScore = 0;
   let soundOn = true;
-  let showMoveLog = true;
+  let showMoveLog = false;
   let gameActive = false;
   let audioCtx = null;
   let currentLang = 'en';
