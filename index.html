@@ -102,9 +102,17 @@
   .menu-actions{display:flex;justify-content:center;}
   .menu-secondary{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
   .btn-ico{font-style:normal;}
+  .btn-daily{
+    padding:10px 26px;border-radius:12px;border:2px solid var(--gold);
+    background:rgba(245,158,11,.12);color:#fde68a;cursor:pointer;font-size:.95em;
+    font-family:inherit;font-weight:700;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:all .18s;
+  }
+  .btn-daily:hover{background:rgba(245,158,11,.24);transform:translateY(-1px);box-shadow:0 0 16px rgba(245,158,11,.3);}
   .settings-body{margin:16px 0;}
   .settings-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:14px 0;color:var(--text);font-size:.95em;}
-  #language-select, #starter-select{
+  #language-select, #starter-select, #timer-select{
     background:var(--panel-solid);color:var(--text);border:1px solid var(--border);
     border-radius:8px;padding:7px 10px;font-size:.95em;font-family:inherit;
   }
@@ -136,6 +144,19 @@
   }
   #status-msg.thinking::after{content:'';display:inline-block;width:1.1em;text-align:left;animation:dots 1.2s steps(4,end) infinite;}
   @keyframes dots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}}
+
+  .vs-col{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  #lead-badge{font-size:.8em;font-weight:800;min-height:1.2em;}
+  #lead-badge.lead-player{color:var(--player-light);}
+  #lead-badge.lead-computer{color:var(--computer-light);}
+  #lead-badge.lead-tie{color:var(--muted);}
+
+  #timer-display{
+    color:#fde68a;font-size:.9em;font-weight:700;
+    background:rgba(245,158,11,.12);border:1px solid var(--gold);
+    padding:3px 14px;border-radius:999px;
+  }
+  #timer-display.warn{color:#fecaca;border-color:var(--computer);background:rgba(244,63,94,.15);animation:cardPulse 0.6s ease-in-out infinite;}
 
   #size-badge{color:var(--muted);font-size:.85em;}
 
@@ -215,7 +236,7 @@
     to{opacity:0;transform:translate(-50%,-36px);}
   }
 
-  .game-controls-primary{display:flex;justify-content:center;}
+  .game-controls-primary{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
   .btn-hint{
     padding:11px 34px;border-radius:12px;border:2px solid var(--hint);
     background:rgba(168,85,247,.14);color:#e9d5ff;cursor:pointer;font-size:1em;
@@ -224,6 +245,15 @@
     transition:all .18s;
   }
   .btn-hint:hover{background:rgba(168,85,247,.28);transform:translateY(-1px);box-shadow:0 0 16px rgba(168,85,247,.35);}
+  .btn-undo{
+    padding:11px 26px;border-radius:12px;border:2px solid #64748b;
+    background:rgba(100,116,139,.14);color:#e2e8f0;cursor:pointer;font-size:1em;
+    font-family:inherit;font-weight:700;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:all .18s;
+  }
+  .btn-undo:hover:not(:disabled){background:rgba(100,116,139,.3);transform:translateY(-1px);}
+  .btn-undo:disabled{opacity:.35;cursor:default;}
   .game-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   .icon-btn{
     background:var(--panel);border:1px solid var(--border);color:var(--text);
@@ -304,10 +334,14 @@
         <button class="diff-btn" data-diff="easy" data-i18n="easy">Easy</button>
         <button class="diff-btn selected" data-diff="medium" data-i18n="medium">Medium</button>
         <button class="diff-btn" data-diff="hard" data-i18n="hard">Hard</button>
+        <button class="diff-btn" data-diff="expert" data-i18n="expert">Expert</button>
       </div>
     </div>
     <div class="menu-actions">
       <button class="btn-primary" id="start-btn" data-i18n="startBtn">Start Game</button>
+    </div>
+    <div class="menu-actions">
+      <button class="btn-daily" id="daily-btn"><span class="btn-ico">&#128197;</span><span data-i18n="dailyBtn">Daily Challenge</span></button>
     </div>
     <div class="menu-secondary">
       <button class="btn-secondary" id="rules-btn-menu"><span class="btn-ico">&#128214;</span><span data-i18n="rulesBtn">How to Play</span></button>
@@ -321,13 +355,17 @@
         <div class="label" data-i18n="you">You</div>
         <div class="value" id="player-score">0</div>
       </div>
-      <div style="color:var(--muted);font-size:1.3em;" data-i18n="vs">vs</div>
+      <div class="vs-col">
+        <div style="color:var(--muted);font-size:1.3em;" data-i18n="vs">vs</div>
+        <div id="lead-badge"></div>
+      </div>
       <div class="score-card computer" id="computer-card">
         <div class="label"><span data-i18n="computer">Computer</span> (<span id="diff-label">Medium</span>)</div>
         <div class="value" id="computer-score">0</div>
       </div>
     </div>
     <div id="status-msg" data-i18n="statusPickBegin">Pick any square to begin.</div>
+    <div id="timer-display" style="display:none;"></div>
     <div id="size-badge">Board: 8x8</div>
     <div class="game-area">
       <div id="board"></div>
@@ -338,6 +376,7 @@
     </div>
     <div class="game-controls-primary">
       <button class="btn-hint" id="hint-btn"><span class="btn-ico">&#128161;</span><span data-i18n="hintBtn">Hint</span></button>
+      <button class="btn-undo" id="undo-btn" disabled><span class="btn-ico">&#8617;&#65039;</span><span data-i18n="undoBtn">Undo</span></button>
     </div>
     <div class="game-controls">
       <button class="icon-btn" id="rules-btn-game"><span class="btn-ico">&#128214;</span><span data-i18n="rulesBtnLabel">Rules</span></button>
@@ -387,6 +426,15 @@
             <option value="random" data-i18n="random">Random</option>
           </select>
         </div>
+        <div class="settings-row">
+          <span data-i18n="timerLabel">Turn timer</span>
+          <select id="timer-select">
+            <option value="0" data-i18n="timerOff">Off</option>
+            <option value="5">5 s</option>
+            <option value="10">10 s</option>
+            <option value="15">15 s</option>
+          </select>
+        </div>
         <label class="settings-row">
           <span data-i18n="soundLabel">Sound effects</span>
           <input type="checkbox" id="sound-toggle" checked>
@@ -426,13 +474,22 @@
   let currentLang = 'en';
   let kbFocus = null;     // {row,col} keyboard cursor
   let stats = {wins:0, losses:0, ties:0};
+  let moveHistory = [];   // for undo: {row,col,player,value,prevLastMove,prevConstraint}
+  let dailyMode = false;  // daily challenge: date-seeded board, fixed 8x8 Hard
+  let turnTimerSecs = 0;  // 0 = off, else 5/10/15
+  let timerInterval = null;
+  let timeLeft = 0;
 
   const TRANSLATIONS = {
     en: {
       subtitle: "A number-grid strategy game vs. the computer",
       boardSizeLabel: "Board size",
       chooseDifficulty: "Choose difficulty",
-      easy: "Easy", medium: "Medium", hard: "Hard",
+      easy: "Easy", medium: "Medium", hard: "Hard", expert: "Expert",
+      undoBtn: "Undo",
+      dailyBtn: "Daily Challenge",
+      timerLabel: "Turn timer",
+      timerOff: "Off",
       startBtn: "Start Game",
       rulesBtn: "How to Play",
       settingsBtn: "Settings",
@@ -474,11 +531,17 @@
       ruleEndLabel: "How it ends:",
       ruleEndText: "If the player to move has no free square left in the required row or column, the game stops right there. Highest score wins.",
       ruleDiffLabel: "Difficulty:",
-      ruleDiffText: "Easy picks at random. Medium always takes the biggest number it can. Hard plans several moves ahead.",
+      ruleDiffText: "Easy picks at random. Medium always takes the biggest number it can. Hard plans several moves ahead. Expert searches even deeper and plays the endgame perfectly.",
       ruleHintLabel: "Hint:",
       ruleHintText: "Stuck? Press Hint and the game will suggest your strongest move — the same brain Hard mode uses.",
+      ruleUndoLabel: "Undo:",
+      ruleUndoText: "Changed your mind? Undo takes back your last move, together with the computer's reply.",
+      ruleTimerLabel: "Turn timer:",
+      ruleTimerText: "Want pressure? Switch on a turn timer in Settings. If time runs out, a random square is picked for you.",
+      ruleDailyLabel: "Daily challenge:",
+      ruleDailyText: "One shared board per day — same numbers and same difficulty (Hard) for everyone. Compare scores with friends!",
       ruleKeysLabel: "Keyboard:",
-      ruleKeysText: "You can also play with the arrow keys — move around the board and press Enter to pick.",
+      ruleKeysText: "You can also play with the keyboard — arrows to move, Enter to pick, H for a hint, U to undo.",
       closeRulesBtn: "Got it",
       moveLogTitle: "Move Log",
       statsWins: "Wins",
@@ -489,7 +552,11 @@
       subtitle: "Un gioco di strategia su griglia numerica contro il computer",
       boardSizeLabel: "Dimensione griglia",
       chooseDifficulty: "Scegli la difficoltà",
-      easy: "Facile", medium: "Medio", hard: "Difficile",
+      easy: "Facile", medium: "Medio", hard: "Difficile", expert: "Esperto",
+      undoBtn: "Annulla",
+      dailyBtn: "Sfida del giorno",
+      timerLabel: "Timer per mossa",
+      timerOff: "Disattivato",
       startBtn: "Inizia partita",
       rulesBtn: "Come si gioca",
       settingsBtn: "Impostazioni",
@@ -531,11 +598,17 @@
       ruleEndLabel: "Fine della partita:",
       ruleEndText: "Se chi deve muovere non ha caselle libere nella riga o colonna richiesta, la partita finisce lì. Vince il punteggio più alto.",
       ruleDiffLabel: "Difficoltà:",
-      ruleDiffText: "Facile sceglie a caso. Medio prende sempre il numero più grande possibile. Difficile pianifica diverse mosse in anticipo.",
+      ruleDiffText: "Facile sceglie a caso. Medio prende sempre il numero più grande possibile. Difficile pianifica diverse mosse in anticipo. Esperto cerca ancora più a fondo e gioca il finale in modo perfetto.",
       ruleHintLabel: "Suggerimento:",
       ruleHintText: "In difficoltà? Premi Suggerimento e il gioco ti indicherà la mossa migliore — la stessa logica del livello Difficile.",
+      ruleUndoLabel: "Annulla:",
+      ruleUndoText: "Hai cambiato idea? Annulla ritira la tua ultima mossa, insieme alla risposta del computer.",
+      ruleTimerLabel: "Timer per mossa:",
+      ruleTimerText: "Vuoi più pressione? Attiva il timer nelle Impostazioni. Se il tempo scade, viene scelta una casella a caso per te.",
+      ruleDailyLabel: "Sfida del giorno:",
+      ruleDailyText: "Una griglia condivisa al giorno — stessi numeri e stessa difficoltà (Difficile) per tutti. Confronta i punteggi con gli amici!",
       ruleKeysLabel: "Tastiera:",
-      ruleKeysText: "Puoi giocare anche con le frecce — muoviti sulla griglia e premi Invio per scegliere.",
+      ruleKeysText: "Puoi giocare anche con la tastiera — frecce per muoverti, Invio per scegliere, H per un suggerimento, U per annullare.",
       closeRulesBtn: "Ho capito",
       moveLogTitle: "Registro mosse",
       statsWins: "Vittorie",
@@ -546,7 +619,11 @@
       subtitle: "Un jeu de stratégie sur grille numérique contre l'ordinateur",
       boardSizeLabel: "Taille de la grille",
       chooseDifficulty: "Choisissez la difficulté",
-      easy: "Facile", medium: "Moyen", hard: "Difficile",
+      easy: "Facile", medium: "Moyen", hard: "Difficile", expert: "Expert",
+      undoBtn: "Annuler",
+      dailyBtn: "Défi du jour",
+      timerLabel: "Chrono par coup",
+      timerOff: "Désactivé",
       startBtn: "Commencer la partie",
       rulesBtn: "Comment jouer",
       settingsBtn: "Paramètres",
@@ -588,11 +665,17 @@
       ruleEndLabel: "Fin de partie :",
       ruleEndText: "Si le joueur qui doit jouer n'a plus de case libre dans la ligne ou la colonne requise, la partie s'arrête là. Le score le plus élevé gagne.",
       ruleDiffLabel: "Difficulté :",
-      ruleDiffText: "Facile choisit au hasard. Moyen prend toujours le plus grand nombre possible. Difficile prévoit plusieurs coups à l'avance.",
+      ruleDiffText: "Facile choisit au hasard. Moyen prend toujours le plus grand nombre possible. Difficile prévoit plusieurs coups à l'avance. Expert cherche encore plus loin et joue la fin de partie parfaitement.",
       ruleHintLabel: "Indice :",
       ruleHintText: "Bloqué ? Appuyez sur Indice et le jeu vous proposera votre meilleur coup — la même logique que le niveau Difficile.",
+      ruleUndoLabel: "Annuler :",
+      ruleUndoText: "Vous changez d'avis ? Annuler reprend votre dernier coup, ainsi que la réponse de l'ordinateur.",
+      ruleTimerLabel: "Chrono par coup :",
+      ruleTimerText: "Envie de pression ? Activez le chrono dans les Paramètres. Si le temps s'écoule, une case au hasard est choisie pour vous.",
+      ruleDailyLabel: "Défi du jour :",
+      ruleDailyText: "Une grille partagée par jour — mêmes nombres et même difficulté (Difficile) pour tous. Comparez vos scores entre amis !",
       ruleKeysLabel: "Clavier :",
-      ruleKeysText: "Vous pouvez aussi jouer avec les flèches — déplacez-vous sur la grille et appuyez sur Entrée pour choisir.",
+      ruleKeysText: "Vous pouvez aussi jouer au clavier — flèches pour vous déplacer, Entrée pour choisir, H pour un indice, U pour annuler.",
       closeRulesBtn: "Compris",
       moveLogTitle: "Journal des coups",
       statsWins: "Victoires",
@@ -603,7 +686,11 @@
       subtitle: "Un juego de estrategia en cuadrícula numérica contra el ordenador",
       boardSizeLabel: "Tamaño del tablero",
       chooseDifficulty: "Elige la dificultad",
-      easy: "Fácil", medium: "Medio", hard: "Difícil",
+      easy: "Fácil", medium: "Medio", hard: "Difícil", expert: "Experto",
+      undoBtn: "Deshacer",
+      dailyBtn: "Reto diario",
+      timerLabel: "Temporizador por turno",
+      timerOff: "Desactivado",
       startBtn: "Empezar partida",
       rulesBtn: "Cómo jugar",
       settingsBtn: "Ajustes",
@@ -645,11 +732,17 @@
       ruleEndLabel: "Final de la partida:",
       ruleEndText: "Si a quien le toca mover no le queda ninguna casilla libre en la fila o columna requerida, la partida termina ahí. Gana la puntuación más alta.",
       ruleDiffLabel: "Dificultad:",
-      ruleDiffText: "Fácil elige al azar. Medio siempre toma el número más grande posible. Difícil planifica varios movimientos por adelantado.",
+      ruleDiffText: "Fácil elige al azar. Medio siempre toma el número más grande posible. Difícil planifica varios movimientos por adelantado. Experto busca aún más profundo y juega el final de forma perfecta.",
       ruleHintLabel: "Pista:",
       ruleHintText: "¿Atascado? Pulsa Pista y el juego te sugerirá tu mejor jugada — la misma lógica del nivel Difícil.",
+      ruleUndoLabel: "Deshacer:",
+      ruleUndoText: "¿Has cambiado de idea? Deshacer retira tu último movimiento, junto con la respuesta del ordenador.",
+      ruleTimerLabel: "Temporizador:",
+      ruleTimerText: "¿Quieres presión? Activa el temporizador en Ajustes. Si el tiempo se agota, se elige una casilla al azar por ti.",
+      ruleDailyLabel: "Reto diario:",
+      ruleDailyText: "Un tablero compartido cada día — los mismos números y la misma dificultad (Difícil) para todos. ¡Compara puntuaciones con tus amigos!",
       ruleKeysLabel: "Teclado:",
-      ruleKeysText: "También puedes jugar con las flechas — muévete por el tablero y pulsa Intro para elegir.",
+      ruleKeysText: "También puedes jugar con el teclado — flechas para moverte, Intro para elegir, H para una pista, U para deshacer.",
       closeRulesBtn: "Entendido",
       moveLogTitle: "Registro de movimientos",
       statsWins: "Victorias",
@@ -684,10 +777,11 @@
     if(stored && typeof stored.sound === 'boolean') soundOn = stored.sound;
     if(stored && typeof stored.showMoveLog === 'boolean') showMoveLog = stored.showMoveLog;
     if(stored && ['player','computer','random'].includes(stored.starter)) starterMode = stored.starter;
+    if(stored && [0,5,10,15].includes(stored.timer)) turnTimerSecs = stored.timer;
   }
 
   function saveSettings(){
-    try{ localStorage.setItem('gridDuelSettings', JSON.stringify({lang:currentLang, sound:soundOn, showMoveLog:showMoveLog, starter:starterMode})); }catch(e){}
+    try{ localStorage.setItem('gridDuelSettings', JSON.stringify({lang:currentLang, sound:soundOn, showMoveLog:showMoveLog, starter:starterMode, timer:turnTimerSecs})); }catch(e){}
   }
 
   function loadStats(){
@@ -728,6 +822,9 @@
       ['ruleEndLabel','ruleEndText'],
       ['ruleDiffLabel','ruleDiffText'],
       ['ruleHintLabel','ruleHintText'],
+      ['ruleUndoLabel','ruleUndoText'],
+      ['ruleTimerLabel','ruleTimerText'],
+      ['ruleDailyLabel','ruleDailyText'],
       ['ruleKeysLabel','ruleKeysText']
     ];
     body.innerHTML = rows.map(([l,tx])=>`<p><strong>${t(l)}</strong> ${t(tx)}</p>`).join('');
@@ -761,15 +858,40 @@
   }
 
   function getDepthLimit(){
-    if(boardSize<=6) return 8;
-    if(boardSize===8) return 6;
-    return 5;
+    const base = boardSize<=6 ? 8 : (boardSize===8 ? 6 : 5);
+    if(difficulty!=='expert') return base;
+    if(!lastMove) return base; // opening move: base depth is plenty
+    let remaining=0;
+    for(let r=0;r<boardSize;r++) for(let c=0;c<boardSize;c++) if(!claimed[r][c]) remaining++;
+    if(remaining<=14) return remaining; // solve the endgame exactly
+    return base+4;
   }
 
   // ---------- helpers ----------
-  function shuffle(arr){
+  function mulberry32(a){
+    return function(){
+      a|=0; a=a+0x6D2B79F5|0;
+      let t=Math.imul(a^a>>>15,1|a);
+      t=t+Math.imul(t^t>>>7,61|t)^t;
+      return ((t^t>>>14)>>>0)/4294967296;
+    };
+  }
+
+  function dailySeed(){
+    const d=new Date();
+    return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+  }
+
+  function dailyDateStr(){
+    const d=new Date();
+    const p=n=>String(n).padStart(2,'0');
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+  }
+
+  function shuffle(arr, rand){
+    const rnd = rand || Math.random;
     for(let i=arr.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
+      const j=Math.floor(rnd()*(i+1));
       [arr[i],arr[j]]=[arr[j],arr[i]];
     }
   }
@@ -777,7 +899,7 @@
   function initBoardData(){
     const total = boardSize*boardSize;
     const nums=[...Array(total).keys()].map(n=>n+1);
-    shuffle(nums);
+    shuffle(nums, dailyMode ? mulberry32(dailySeed()) : null);
     board=[]; claimed=[];
     for(let r=0;r<boardSize;r++){
       board.push(nums.slice(r*boardSize,r*boardSize+boardSize));
@@ -897,6 +1019,94 @@
     animateNumber(document.getElementById('computer-score'), computerScore);
     document.getElementById('player-card').classList.toggle('active-turn', currentTurn==='player' && gameActive);
     document.getElementById('computer-card').classList.toggle('active-turn', currentTurn==='computer' && gameActive);
+    updateLeadBadge();
+    updateUndoButton();
+  }
+
+  function updateLeadBadge(){
+    const el=document.getElementById('lead-badge');
+    if(!el) return;
+    const diff=playerScore-computerScore;
+    if(!gameActive || (playerScore===0 && computerScore===0)){
+      el.textContent=''; el.className=''; return;
+    }
+    if(diff>0){ el.textContent='▲ +'+diff; el.className='lead-player'; }
+    else if(diff<0){ el.textContent='▼ +'+(-diff); el.className='lead-computer'; }
+    else { el.textContent='='; el.className='lead-tie'; }
+  }
+
+  function updateUndoButton(){
+    const btn=document.getElementById('undo-btn');
+    if(!btn) return;
+    btn.disabled = !(gameActive && currentTurn==='player' && moveHistory.some(m=>m.player==='player'));
+  }
+
+  // ---------- turn timer ----------
+  function stopTimer(){
+    if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+    const el=document.getElementById('timer-display');
+    if(el){ el.style.display='none'; el.classList.remove('warn'); }
+  }
+
+  function renderTimer(){
+    const el=document.getElementById('timer-display');
+    if(!el) return;
+    el.style.display='';
+    el.textContent='⏱ '+timeLeft+'s';
+    el.classList.toggle('warn', timeLeft<=3);
+  }
+
+  function startPlayerTimer(){
+    stopTimer();
+    if(!turnTimerSecs || !gameActive || currentTurn!=='player') return;
+    timeLeft=turnTimerSecs;
+    renderTimer();
+    const myId=gameId;
+    timerInterval=setInterval(()=>{
+      if(myId!==gameId || !gameActive || currentTurn!=='player'){ stopTimer(); return; }
+      timeLeft--;
+      if(timeLeft<=0){
+        stopTimer();
+        const moves=getValidMoves();
+        if(moves.length>0){
+          const m=moves[Math.floor(Math.random()*moves.length)];
+          makeMove(m.row,m.col,'player');
+        }
+      } else {
+        renderTimer();
+      }
+    },1000);
+  }
+
+  // ---------- undo ----------
+  function undoMove(){
+    if(!gameActive || currentTurn!=='player') return;
+    if(!moveHistory.some(m=>m.player==='player')) return;
+    stopTimer();
+    let first=null;
+    // remove the computer's reply (if any), then the player's move
+    while(moveHistory.length){
+      const m=moveHistory.pop();
+      claimed[m.row][m.col]=null;
+      if(m.player==='player') playerScore-=m.value; else computerScore-=m.value;
+      const list=document.getElementById('move-log');
+      if(list.lastElementChild) list.removeChild(list.lastElementChild);
+      first=m;
+      if(m.player==='player') break;
+    }
+    lastMove=first.prevLastMove;
+    nextConstraint=first.prevConstraint;
+    currentTurn='player';
+    if(lastMoveEl){ lastMoveEl.classList.remove('last-move'); lastMoveEl=null; }
+    clearKbFocus();
+    refreshBoardClasses();
+    if(lastMove){ markLastMove(lastMove.row,lastMove.col); }
+    setStatus(lastMove ? t('statusYourTurn',{constraint:constraintLabel()}) : t('statusPickBegin'));
+    highlightLane();
+    highlightValidMoves();
+    updateScores();
+    playSound('undo');
+    startPlayerTimer();
   }
 
   // ---------- keyboard ----------
@@ -939,6 +1149,8 @@
       if(kbFocus){ e.preventDefault(); handleCellClick(kbFocus.row,kbFocus.col); }
     } else if(k==='h'||k==='H'){
       triggerHint();
+    } else if(k==='u'||k==='U'){
+      undoMove();
     }
   });
 
@@ -955,7 +1167,9 @@
   }
 
   function makeMove(row,col,player){
+    stopTimer();
     const value = board[row][col];
+    moveHistory.push({row,col,player,value,prevLastMove:lastMove,prevConstraint:nextConstraint});
     claimed[row][col]=player;
     if(player==='player') playerScore+=value; else computerScore+=value;
     lastMove={row,col};
@@ -1002,6 +1216,7 @@
     if(lastMoveEl) lastMoveEl.classList.add('last-move');
     updateScores();
     if(currentTurn==='computer'){
+      stopTimer();
       setStatus(t('statusComputerThinking'), true);
       const myId=gameId;
       setTimeout(()=>{ if(myId===gameId) computerMove(); },550);
@@ -1009,11 +1224,14 @@
       setStatus(lastMove ? t('statusYourTurn',{constraint:constraintLabel()}) : t('statusPickBegin'));
       highlightLane();
       highlightValidMoves();
+      startPlayerTimer();
     }
   }
 
   function endGame(reason){
     gameActive=false;
+    stopTimer();
+    if(dailyMode) reason = reason + ' · 📅 ' + t('dailyBtn') + ' ' + dailyDateStr();
     document.getElementById('final-player').textContent=playerScore;
     document.getElementById('final-computer').textContent=computerScore;
     let title, emoji;
@@ -1230,6 +1448,10 @@
         setTimeout(()=>playTone(330,0.1,'triangle',0.1),70);
         break;
       case 'invalid': playTone(130,0.14,'sawtooth',0.1); break;
+      case 'undo':
+        playTone(440,0.07,'sine',0.1);
+        setTimeout(()=>playTone(330,0.09,'sine',0.09),60);
+        break;
       case 'hint':
         playTone(880,0.08,'sine',0.1);
         setTimeout(()=>playTone(1175,0.1,'sine',0.09),80);
@@ -1249,15 +1471,21 @@
 
   function startGame(){
     gameId++;
+    stopTimer();
+    if(dailyMode){ boardSize=8; difficulty='hard'; }
     initBoardData();
     renderBoard();
     playerScore=0; computerScore=0;
     lastMove=null; nextConstraint=null; lastMoveEl=null; kbFocus=null;
-    if(starterMode==='random') currentTurn = Math.random()<0.5 ? 'player' : 'computer';
+    moveHistory=[];
+    if(dailyMode) currentTurn='player';
+    else if(starterMode==='random') currentTurn = Math.random()<0.5 ? 'player' : 'computer';
     else currentTurn = starterMode;
     gameActive=true;
     document.getElementById('diff-label').textContent = t(difficulty);
-    document.getElementById('size-badge').textContent = t('boardBadge',{size:boardSize});
+    document.getElementById('size-badge').textContent = dailyMode
+      ? ('📅 '+t('dailyBtn')+' · '+dailyDateStr()+' · '+t('boardBadge',{size:boardSize}))
+      : t('boardBadge',{size:boardSize});
     document.getElementById('move-log').innerHTML = '';
     document.getElementById('player-score').textContent='0';
     document.getElementById('computer-score').textContent='0';
@@ -1284,12 +1512,21 @@
     });
   });
 
-  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('start-btn').addEventListener('click', ()=>{
+    dailyMode=false;
+    // re-read menu selections (daily mode may have overridden them)
+    const sizeSel=document.querySelector('.size-btn.selected');
+    if(sizeSel) boardSize=parseInt(sizeSel.dataset.size,10);
+    const diffSel=document.querySelector('.diff-btn.selected');
+    if(diffSel) difficulty=diffSel.dataset.diff;
+    startGame();
+  });
+  document.getElementById('daily-btn').addEventListener('click', ()=>{ dailyMode=true; startGame(); });
   document.getElementById('restart-btn').addEventListener('click', startGame);
   document.getElementById('rematch-btn').addEventListener('click', startGame);
 
-  document.getElementById('menu-btn').addEventListener('click', ()=>{ gameActive=false; showScreen('menu-screen'); });
-  document.getElementById('end-menu-btn').addEventListener('click', ()=>{ gameActive=false; showScreen('menu-screen'); });
+  document.getElementById('menu-btn').addEventListener('click', ()=>{ gameActive=false; stopTimer(); showScreen('menu-screen'); });
+  document.getElementById('end-menu-btn').addEventListener('click', ()=>{ gameActive=false; stopTimer(); showScreen('menu-screen'); });
 
   function showModal(id){
     ['end-modal','rules-modal','settings-modal'].forEach(mid=>{
@@ -1312,6 +1549,14 @@
   document.getElementById('close-settings-btn').addEventListener('click', hideOverlay);
 
   document.getElementById('hint-btn').addEventListener('click', triggerHint);
+  document.getElementById('undo-btn').addEventListener('click', undoMove);
+
+  document.getElementById('timer-select').addEventListener('change', (e)=>{
+    turnTimerSecs=parseInt(e.target.value,10)||0;
+    saveSettings();
+    if(gameActive && currentTurn==='player') startPlayerTimer();
+    else if(!turnTimerSecs) stopTimer();
+  });
 
   document.getElementById('sound-toggle').addEventListener('change', (e)=>{
     soundOn=e.target.checked;
@@ -1340,6 +1585,7 @@
   loadStats();
   document.getElementById('language-select').value = currentLang;
   document.getElementById('starter-select').value = starterMode;
+  document.getElementById('timer-select').value = String(turnTimerSecs);
   document.getElementById('sound-toggle').checked = soundOn;
   document.getElementById('movelog-toggle').checked = showMoveLog;
   applyTranslations();
@@ -1348,5 +1594,6 @@
 
 })();
 </script>
+<!-- Grid Duel v3 -->
 </body>
 </html>
