@@ -3,23 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1020">
 <title>Grid Duel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0f172a;
-    --panel:#1e293b;
+    --bg0:#0b1020;
+    --bg1:#151d38;
+    --panel:rgba(30,41,59,.72);
+    --panel-solid:#1e293b;
+    --border:rgba(148,163,184,.18);
     --accent:#38bdf8;
+    --accent2:#8b5cf6;
     --player:#3b82f6;
-    --computer:#ef4444;
+    --player-light:#60a5fa;
+    --computer:#f43f5e;
+    --computer-light:#fb7185;
     --text:#f1f5f9;
     --muted:#94a3b8;
-    --valid:#22c55e;
+    --valid:#34d399;
+    --gold:#f59e0b;
+    --hint:#a855f7;
   }
   *{box-sizing:border-box;}
+  html,body{height:100%;}
   body{
     margin:0;
-    font-family:'Segoe UI',Tahoma,Geneva,sans-serif;
-    background:linear-gradient(160deg,#0f172a,#1e293b);
+    font-family:'Outfit','Segoe UI',Tahoma,Geneva,sans-serif;
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(56,189,248,.14), transparent 60%),
+      radial-gradient(900px 600px at 110% 110%, rgba(139,92,246,.16), transparent 60%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    background-attachment:fixed;
     color:var(--text);
     min-height:100vh;
     display:flex;
@@ -28,79 +45,148 @@
     padding:20px;
   }
   .screen{display:none;}
-  .screen.active{display:flex;}
-  #menu-screen{flex-direction:column;align-items:center;gap:18px;text-align:center;max-width:480px;}
-  h1{font-size:2.2em;margin-bottom:0;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;background-clip:text;color:transparent;}
-  .subtitle{color:var(--muted);margin-top:-8px;}
-  .difficulty-options{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
-  .diff-btn, .size-btn{
-    padding:12px 20px;border-radius:10px;border:2px solid transparent;
-    background:var(--panel);color:var(--text);cursor:pointer;font-size:1em;
-    transition:all .15s;
+  .screen.active{display:flex;animation:screenIn .35s ease;}
+  @keyframes screenIn{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:translateY(0);}
   }
-  .diff-btn.selected, .size-btn.selected{border-color:var(--accent);background:#27405c;}
+  #menu-screen{flex-direction:column;align-items:center;gap:20px;text-align:center;max-width:520px;}
+  h1{
+    font-size:2.6em;margin:0;font-weight:800;letter-spacing:.5px;
+    background:linear-gradient(90deg,#38bdf8,#8b5cf6,#f472b6);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 18px rgba(56,189,248,.25));
+  }
+  .subtitle{color:var(--muted);margin:0;}
+  .stats-line{
+    color:var(--muted);font-size:.85em;
+    background:var(--panel);border:1px solid var(--border);
+    padding:6px 16px;border-radius:999px;
+  }
+  .menu-section{
+    background:var(--panel);border:1px solid var(--border);border-radius:16px;
+    padding:14px 22px 18px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    width:100%;
+  }
+  .menu-section > p{margin:0 0 10px;color:var(--muted);font-size:.9em;text-transform:uppercase;letter-spacing:1.5px;}
+  .difficulty-options{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .diff-btn, .size-btn{
+    padding:11px 22px;border-radius:12px;border:2px solid transparent;
+    background:rgba(51,65,85,.7);color:var(--text);cursor:pointer;font-size:1em;
+    font-family:inherit;font-weight:600;
+    transition:all .18s;
+  }
+  .diff-btn.selected, .size-btn.selected{
+    border-color:var(--accent);
+    background:linear-gradient(135deg,rgba(56,189,248,.22),rgba(139,92,246,.22));
+    box-shadow:0 0 14px rgba(56,189,248,.25);
+  }
   .diff-btn:hover, .size-btn:hover{transform:translateY(-2px);}
   .btn-primary{
-    padding:14px 32px;border-radius:10px;border:none;
-    background:linear-gradient(90deg,#38bdf8,#818cf8);
-    color:#0f172a;font-weight:700;font-size:1.1em;cursor:pointer;
-    transition:transform .15s;
+    padding:15px 46px;border-radius:14px;border:none;
+    background:linear-gradient(90deg,#38bdf8,#8b5cf6);
+    color:#0b1020;font-weight:800;font-size:1.15em;cursor:pointer;
+    font-family:inherit;letter-spacing:.3px;
+    box-shadow:0 8px 26px rgba(56,189,248,.35);
+    transition:transform .18s, box-shadow .18s;
   }
-  .btn-primary:hover{transform:translateY(-2px);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(56,189,248,.45);}
   .btn-secondary{
-    padding:10px 22px;border-radius:10px;border:1px solid var(--muted);
-    background:transparent;color:var(--text);cursor:pointer;font-size:.95em;
+    padding:10px 22px;border-radius:12px;border:1px solid var(--border);
+    background:var(--panel);color:var(--text);cursor:pointer;font-size:.95em;
+    font-family:inherit;font-weight:600;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:all .18s;
   }
-  .btn-secondary:hover{background:var(--panel);}
-  .menu-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
-  .sound-row{color:var(--muted);font-size:.85em;display:flex;gap:6px;align-items:center;}
+  .btn-secondary:hover{background:rgba(51,65,85,.9);transform:translateY(-1px);}
+  .menu-actions{display:flex;justify-content:center;}
+  .menu-secondary{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .btn-ico{font-style:normal;}
   .settings-body{margin:16px 0;}
   .settings-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:14px 0;color:var(--text);font-size:.95em;}
-  #language-select{background:var(--panel);color:var(--text);border:1px solid var(--muted);border-radius:8px;padding:6px 10px;font-size:.95em;}
+  #language-select, #starter-select{
+    background:var(--panel-solid);color:var(--text);border:1px solid var(--border);
+    border-radius:8px;padding:7px 10px;font-size:.95em;font-family:inherit;
+  }
+  input[type="checkbox"]{accent-color:var(--accent);width:17px;height:17px;cursor:pointer;}
 
   #game-screen{flex-direction:column;align-items:center;gap:14px;}
-  .scoreboard{display:flex;gap:32px;align-items:center;justify-content:center;}
+  .scoreboard{display:flex;gap:26px;align-items:center;justify-content:center;}
   .score-card{
-    padding:10px 22px;border-radius:12px;background:var(--panel);
-    text-align:center;min-width:120px;border:2px solid transparent;
-    transition:border-color .2s;
+    padding:10px 24px;border-radius:14px;
+    background:var(--panel);border:2px solid var(--border);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    text-align:center;min-width:124px;
+    transition:border-color .25s, box-shadow .25s;
   }
-  .score-card.active-turn{border-color:var(--accent);}
-  .score-card .label{font-size:.78em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
-  .score-card .value{font-size:1.8em;font-weight:700;}
-  .score-card.player .value{color:var(--player);}
-  .score-card.computer .value{color:var(--computer);}
+  .score-card.active-turn{border-color:var(--accent);box-shadow:0 0 18px rgba(56,189,248,.35);animation:cardPulse 1.8s ease-in-out infinite;}
+  @keyframes cardPulse{
+    0%,100%{box-shadow:0 0 12px rgba(56,189,248,.25);}
+    50%{box-shadow:0 0 22px rgba(56,189,248,.5);}
+  }
+  .score-card .label{font-size:.76em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .score-card .value{font-size:1.9em;font-weight:800;}
+  .score-card.player .value{color:var(--player-light);}
+  .score-card.computer .value{color:var(--computer-light);}
 
-  #status-msg{min-height:22px;color:var(--muted);font-size:.95em;text-align:center;}
+  #status-msg{
+    min-height:34px;color:var(--text);font-size:.95em;text-align:center;
+    background:var(--panel);border:1px solid var(--border);
+    padding:6px 18px;border-radius:999px;
+  }
+  #status-msg.thinking::after{content:'';display:inline-block;width:1.1em;text-align:left;animation:dots 1.2s steps(4,end) infinite;}
+  @keyframes dots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}}
+
+  #size-badge{color:var(--muted);font-size:.85em;}
 
   #board{
     display:grid;
     grid-template-columns:repeat(8,1fr);
     grid-template-rows:repeat(8,1fr);
     gap:5px;
-    width:min(90vw,520px);
-    height:min(90vw,520px);
+    width:min(92vw,540px);
+    height:min(92vw,540px);
     background:var(--panel);
-    padding:8px;
-    border-radius:12px;
+    border:1px solid var(--border);
+    padding:9px;
+    border-radius:16px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
   }
   .cell{
+    position:relative;
     display:flex;align-items:center;justify-content:center;
-    background:#334155;color:var(--text);
-    border-radius:6px;font-weight:600;font-size:clamp(12px,2.2vw,18px);
+    background:linear-gradient(145deg,#36435f,#2b3852);
+    color:#cbd5e1;
+    border-radius:8px;font-weight:700;font-size:clamp(12px,2.2vw,18px);
     cursor:default;user-select:none;
-    transition:transform .12s,background .2s,box-shadow .2s;
+    transition:transform .12s, background .2s, box-shadow .2s, color .2s;
   }
+  .cell.lane{background-image:linear-gradient(rgba(56,189,248,.10),rgba(56,189,248,.10));}
   .cell.valid{
-    background:#166534;
+    background:linear-gradient(145deg,#14532d,#166534);
+    color:#dcfce7;
     box-shadow:0 0 0 2px var(--valid);
     cursor:pointer;
+    animation:validPulse 1.8s ease-in-out infinite;
   }
-  .cell.valid:hover{transform:scale(1.06);}
-  .cell.claimed-player{background:var(--player);color:#fff;}
-  .cell.claimed-computer{background:var(--computer);color:#fff;}
-  .cell.last-move{box-shadow:0 0 0 3px #f59e0b, 0 0 12px 2px rgba(245,158,11,.65);}
-  .cell.hint{box-shadow:0 0 0 3px #a855f7, 0 0 14px 4px rgba(168,85,247,.6);}
+  @keyframes validPulse{
+    0%,100%{box-shadow:0 0 0 2px rgba(52,211,153,.9);}
+    50%{box-shadow:0 0 0 2px rgba(52,211,153,.45), 0 0 10px 2px rgba(52,211,153,.25);}
+  }
+  .cell.valid:hover{transform:scale(1.09);background:linear-gradient(145deg,#166534,#15803d);z-index:2;}
+  .cell.claimed-player{background:linear-gradient(145deg,#3b82f6,#2563eb);color:#fff;}
+  .cell.claimed-computer{background:linear-gradient(145deg,#f43f5e,#e11d48);color:#fff;}
+  .cell.last-move{box-shadow:0 0 0 3px var(--gold), 0 0 12px 2px rgba(245,158,11,.65);z-index:1;}
+  .cell.hint{
+    box-shadow:0 0 0 3px var(--hint), 0 0 14px 4px rgba(168,85,247,.6);
+    animation:hintPulse .9s ease-in-out infinite;z-index:2;
+  }
+  @keyframes hintPulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.1);}
+  }
+  .cell.kb-focus{outline:2px dashed #e2e8f0;outline-offset:-3px;}
   #board.size-6 .cell{font-size:clamp(15px,3.4vw,24px);}
   #board.size-8 .cell{font-size:clamp(12px,2.2vw,18px);}
   #board.size-10 .cell{font-size:clamp(10px,1.7vw,15px);}
@@ -116,45 +202,86 @@
     25%{transform:translateX(-4px);}
     75%{transform:translateX(4px);}
   }
+  .score-float{
+    position:absolute;top:-4px;left:50%;
+    font-weight:800;font-size:1em;pointer-events:none;z-index:6;
+    animation:floatUp .85s ease-out forwards;
+    text-shadow:0 1px 4px rgba(0,0,0,.6);
+  }
+  .score-float.player{color:var(--player-light);}
+  .score-float.computer{color:var(--computer-light);}
+  @keyframes floatUp{
+    from{opacity:1;transform:translate(-50%,0);}
+    to{opacity:0;transform:translate(-50%,-36px);}
+  }
 
+  .game-controls-primary{display:flex;justify-content:center;}
+  .btn-hint{
+    padding:11px 34px;border-radius:12px;border:2px solid var(--hint);
+    background:rgba(168,85,247,.14);color:#e9d5ff;cursor:pointer;font-size:1em;
+    font-family:inherit;font-weight:700;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:all .18s;
+  }
+  .btn-hint:hover{background:rgba(168,85,247,.28);transform:translateY(-1px);box-shadow:0 0 16px rgba(168,85,247,.35);}
   .game-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .icon-btn{
+    background:var(--panel);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:8px 14px;cursor:pointer;font-size:.9em;
+    font-family:inherit;font-weight:600;
+    display:inline-flex;align-items:center;gap:7px;
+    transition:all .18s;
+  }
+  .icon-btn:hover{background:rgba(51,65,85,.9);transform:translateY(-1px);}
 
   .game-area{display:flex;gap:16px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
   #move-log-panel{
-    background:var(--panel);border-radius:12px;padding:12px 16px;
-    width:200px;max-height:min(90vw,520px);overflow-y:auto;
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 16px;
+    width:200px;max-height:min(92vw,540px);overflow-y:auto;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   }
-  #move-log-panel h3{margin:0 0 8px;font-size:.85em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  #move-log-panel h3{margin:0 0 8px;font-size:.82em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
   #move-log{list-style:none;margin:0;padding:0;font-size:.82em;}
   #move-log li{padding:4px 8px;border-radius:6px;margin-bottom:3px;display:flex;justify-content:space-between;gap:8px;}
-  #move-log li.player{background:rgba(59,130,246,.15);color:var(--player);}
-  #move-log li.computer{background:rgba(239,68,68,.15);color:var(--computer);}
-  #size-badge{color:var(--muted);font-size:.85em;}
+  #move-log li.player{background:rgba(59,130,246,.15);color:var(--player-light);}
+  #move-log li.computer{background:rgba(244,63,94,.15);color:var(--computer-light);}
 
   #overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,.65);
+    position:fixed;inset:0;background:rgba(2,6,23,.72);
     display:none;align-items:center;justify-content:center;z-index:50;
     padding:20px;
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   }
   #overlay.active{display:flex;}
   .modal{
-    background:var(--panel);border-radius:14px;padding:28px;max-width:420px;
-    text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);
+    background:linear-gradient(160deg,#243147,#1b2539);
+    border:1px solid var(--border);
+    border-radius:18px;padding:30px;max-width:440px;width:100%;
+    text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.55);
+    animation:screenIn .3s ease;
   }
-  .modal h2{margin-top:0;}
-  .final-scores{display:flex;justify-content:center;gap:30px;margin:16px 0;}
-  .final-scores .fscore{font-weight:700;font-size:1.6em;}
+  .modal h2{margin-top:0;font-size:1.6em;}
+  .final-scores{display:flex;justify-content:center;gap:34px;margin:16px 0;}
+  .final-scores .fscore{font-weight:800;font-size:1.8em;}
   .final-scores .flabel{color:var(--muted);font-size:.85em;}
   .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
 
-  #rules-modal .rules-body{text-align:left;color:var(--muted);font-size:.95em;line-height:1.55;max-height:50vh;overflow-y:auto;}
-  #rules-modal .rules-body p{margin:8px 0;}
+  #rules-modal .rules-body{text-align:left;color:#cbd5e1;font-size:.95em;line-height:1.6;max-height:52vh;overflow-y:auto;}
+  #rules-modal .rules-body p{margin:9px 0;}
+  #rules-modal .rules-body strong{color:var(--accent);}
 
-  .icon-btn{
-    background:none;border:1px solid var(--muted);color:var(--text);
-    border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.9em;
+  #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:99;}
+
+  @media (max-width:620px){
+    body{padding:12px;}
+    h1{font-size:2em;}
+    .scoreboard{gap:12px;}
+    .score-card{min-width:96px;padding:8px 14px;}
+    .score-card .value{font-size:1.5em;}
+    #move-log-panel{width:min(92vw,540px);max-height:150px;}
+    .game-controls .icon-btn{padding:8px 10px;font-size:.85em;}
+    .menu-section{padding:12px 14px 15px;}
   }
-  .icon-btn:hover{background:var(--panel);}
 </style>
 </head>
 <body>
@@ -162,16 +289,17 @@
   <div id="menu-screen" class="screen active">
     <h1>Grid Duel</h1>
     <p class="subtitle" data-i18n="subtitle">A number-grid strategy game vs. the computer</p>
-    <div>
-      <p style="margin-bottom:8px;color:var(--muted);" data-i18n="boardSizeLabel">Board size</p>
+    <div class="stats-line" id="stats-line" style="display:none;"></div>
+    <div class="menu-section">
+      <p data-i18n="boardSizeLabel">Board size</p>
       <div class="difficulty-options">
         <button class="size-btn" data-size="6">6&times;6</button>
         <button class="size-btn selected" data-size="8">8&times;8</button>
         <button class="size-btn" data-size="10">10&times;10</button>
       </div>
     </div>
-    <div>
-      <p style="margin-bottom:8px;color:var(--muted);" data-i18n="chooseDifficulty">Choose difficulty</p>
+    <div class="menu-section">
+      <p data-i18n="chooseDifficulty">Choose difficulty</p>
       <div class="difficulty-options">
         <button class="diff-btn" data-diff="easy" data-i18n="easy">Easy</button>
         <button class="diff-btn selected" data-diff="medium" data-i18n="medium">Medium</button>
@@ -180,8 +308,10 @@
     </div>
     <div class="menu-actions">
       <button class="btn-primary" id="start-btn" data-i18n="startBtn">Start Game</button>
-      <button class="btn-secondary" id="rules-btn-menu" data-i18n="rulesBtn">How to Play</button>
-      <button class="btn-secondary" id="settings-btn-menu" data-i18n="settingsBtn">Settings</button>
+    </div>
+    <div class="menu-secondary">
+      <button class="btn-secondary" id="rules-btn-menu"><span class="btn-ico">&#128214;</span><span data-i18n="rulesBtn">How to Play</span></button>
+      <button class="btn-secondary" id="settings-btn-menu"><span class="btn-ico">&#9881;&#65039;</span><span data-i18n="settingsBtn">Settings</span></button>
     </div>
   </div>
 
@@ -206,12 +336,14 @@
         <ol id="move-log"></ol>
       </div>
     </div>
+    <div class="game-controls-primary">
+      <button class="btn-hint" id="hint-btn"><span class="btn-ico">&#128161;</span><span data-i18n="hintBtn">Hint</span></button>
+    </div>
     <div class="game-controls">
-      <button class="icon-btn" id="hint-btn" data-i18n="hintBtn">Hint</button>
-      <button class="icon-btn" id="rules-btn-game" data-i18n="rulesBtnLabel">Rules</button>
-      <button class="icon-btn" id="settings-btn-game" data-i18n="settingsBtn">Settings</button>
-      <button class="icon-btn" id="restart-btn" data-i18n="restartBtn">Restart</button>
-      <button class="icon-btn" id="menu-btn" data-i18n="menuBtn">Main Menu</button>
+      <button class="icon-btn" id="rules-btn-game"><span class="btn-ico">&#128214;</span><span data-i18n="rulesBtnLabel">Rules</span></button>
+      <button class="icon-btn" id="settings-btn-game"><span class="btn-ico">&#9881;&#65039;</span><span data-i18n="settingsBtn">Settings</span></button>
+      <button class="icon-btn" id="restart-btn"><span class="btn-ico">&#128260;</span><span data-i18n="restartBtn">Restart</span></button>
+      <button class="icon-btn" id="menu-btn"><span class="btn-ico">&#127968;</span><span data-i18n="menuBtn">Main Menu</span></button>
     </div>
   </div>
 
@@ -220,8 +352,8 @@
       <h2 id="end-title">Game Over</h2>
       <p id="end-reason" style="color:var(--muted);"></p>
       <div class="final-scores">
-        <div><div class="fscore" style="color:var(--player);" id="final-player">0</div><div class="flabel" data-i18n="you">You</div></div>
-        <div><div class="fscore" style="color:var(--computer);" id="final-computer">0</div><div class="flabel" data-i18n="computer">Computer</div></div>
+        <div><div class="fscore" style="color:var(--player-light);" id="final-player">0</div><div class="flabel" data-i18n="you">You</div></div>
+        <div><div class="fscore" style="color:var(--computer-light);" id="final-computer">0</div><div class="flabel" data-i18n="computer">Computer</div></div>
       </div>
       <div class="modal-actions">
         <button class="btn-primary" id="rematch-btn" data-i18n="playAgainBtn">Play Again</button>
@@ -245,6 +377,14 @@
             <option value="it">Italiano</option>
             <option value="fr">Fran&ccedil;ais</option>
             <option value="es">Espa&ntilde;ol</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <span data-i18n="whoStartsLabel">Who starts?</span>
+          <select id="starter-select">
+            <option value="player" data-i18n="you">You</option>
+            <option value="computer" data-i18n="computer">Computer</option>
+            <option value="random" data-i18n="random">Random</option>
           </select>
         </div>
         <label class="settings-row">
@@ -279,9 +419,13 @@
   let playerScore = 0, computerScore = 0;
   let soundOn = true;
   let showMoveLog = false;
+  let starterMode = 'player'; // 'player' | 'computer' | 'random'
   let gameActive = false;
+  let gameId = 0;         // guards stale computer-move timeouts
   let audioCtx = null;
   let currentLang = 'en';
+  let kbFocus = null;     // {row,col} keyboard cursor
+  let stats = {wins:0, losses:0, ties:0};
 
   const TRANSLATIONS = {
     en: {
@@ -294,6 +438,8 @@
       settingsBtn: "Settings",
       settingsTitle: "Settings",
       languageLabel: "Language",
+      whoStartsLabel: "Who starts?",
+      random: "Random",
       soundLabel: "Sound effects",
       closeSettingsBtn: "Done",
       showMoveLogLabel: "Show move log",
@@ -302,7 +448,7 @@
       vs: "vs",
       statusPickBegin: "Pick any square to begin.",
       statusYourTurn: "Your turn — pick a number from the highlighted {constraint}.",
-      statusComputerThinking: "Computer is thinking...",
+      statusComputerThinking: "Computer is thinking",
       row: "row",
       column: "column",
       boardBadge: "Board: {size}x{size}",
@@ -317,22 +463,27 @@
       reasonDeadEnd: "No legal moves remain in the required row/column.",
       playAgainBtn: "Play Again",
       rulesModalTitle: "How to Play",
-      ruleBoardLabel: "Board:",
-      ruleBoardText: "A grid (6×6, 8×8, or 10×10, your choice) holds the numbers 1 through the total number of squares, shuffled randomly.",
+      ruleBoardLabel: "The board:",
+      ruleBoardText: "Every square holds a number, from 1 up to the total number of squares. Bigger numbers are worth more points.",
       ruleFirstLabel: "First move:",
-      ruleFirstText: "You go first and may pick any square.",
-      ruleAltLabel: "Alternating constraint:",
-      ruleAltText: "After that, each pick must come from the same column as the last picked square, then the same row, then column again — alternating every turn.",
-      ruleClaimLabel: "Claiming:",
-      ruleClaimText: "Each picked square is removed from play and its value is added to that player's score.",
-      ruleEndLabel: "Game end:",
-      ruleEndText: "If it's a player's turn and there are no legal unclaimed squares left in the required row/column, the game ends immediately. Whoever has the higher total score at that moment wins.",
+      ruleFirstText: "Whoever starts can pick any square they like.",
+      ruleAltLabel: "After that:",
+      ruleAltText: "Each new pick must line up with the previous one — first in the same column, then in the same row, then the same column again, alternating every turn.",
+      ruleClaimLabel: "Scoring:",
+      ruleClaimText: "When you pick a square, its number is added to your score and the square is out of the game.",
+      ruleEndLabel: "How it ends:",
+      ruleEndText: "If the player to move has no free square left in the required row or column, the game stops right there. Highest score wins.",
       ruleDiffLabel: "Difficulty:",
-      ruleDiffText: "Easy picks randomly, Medium always grabs the highest legal number, Hard thinks several moves ahead.",
+      ruleDiffText: "Easy picks at random. Medium always takes the biggest number it can. Hard plans several moves ahead.",
       ruleHintLabel: "Hint:",
-      ruleHintText: "On your turn, press Hint to highlight the move the same deep-search logic (as used by Hard) recommends for you.",
+      ruleHintText: "Stuck? Press Hint and the game will suggest your strongest move — the same brain Hard mode uses.",
+      ruleKeysLabel: "Keyboard:",
+      ruleKeysText: "You can also play with the arrow keys — move around the board and press Enter to pick.",
       closeRulesBtn: "Got it",
-      moveLogTitle: "Move Log"
+      moveLogTitle: "Move Log",
+      statsWins: "Wins",
+      statsLosses: "Losses",
+      statsTies: "Ties"
     },
     it: {
       subtitle: "Un gioco di strategia su griglia numerica contro il computer",
@@ -344,6 +495,8 @@
       settingsBtn: "Impostazioni",
       settingsTitle: "Impostazioni",
       languageLabel: "Lingua",
+      whoStartsLabel: "Chi inizia?",
+      random: "Casuale",
       soundLabel: "Effetti sonori",
       closeSettingsBtn: "Fatto",
       showMoveLogLabel: "Mostra registro mosse",
@@ -352,7 +505,7 @@
       vs: "contro",
       statusPickBegin: "Scegli una casella qualsiasi per iniziare.",
       statusYourTurn: "Il tuo turno — scegli un numero dalla {constraint} evidenziata.",
-      statusComputerThinking: "Il computer sta pensando...",
+      statusComputerThinking: "Il computer sta pensando",
       row: "riga",
       column: "colonna",
       boardBadge: "Griglia: {size}x{size}",
@@ -367,22 +520,27 @@
       reasonDeadEnd: "Non ci sono più mosse legali nella riga/colonna richiesta.",
       playAgainBtn: "Gioca ancora",
       rulesModalTitle: "Come si gioca",
-      ruleBoardLabel: "Griglia:",
-      ruleBoardText: "Una griglia (6×6, 8×8 o 10×10, a tua scelta) contiene i numeri da 1 al totale delle caselle, mescolati casualmente.",
+      ruleBoardLabel: "La griglia:",
+      ruleBoardText: "Ogni casella contiene un numero, da 1 fino al totale delle caselle. I numeri più grandi valgono più punti.",
       ruleFirstLabel: "Prima mossa:",
-      ruleFirstText: "Inizi tu e puoi scegliere qualsiasi casella.",
-      ruleAltLabel: "Vincolo alternato:",
-      ruleAltText: "Dopo la prima mossa, ogni scelta deve provenire dalla stessa colonna dell'ultima casella scelta, poi dalla stessa riga, poi di nuovo dalla colonna — alternando a ogni turno.",
-      ruleClaimLabel: "Conquista:",
-      ruleClaimText: "Ogni casella scelta viene rimossa dal gioco e il suo valore si aggiunge al punteggio del giocatore.",
-      ruleEndLabel: "Fine partita:",
-      ruleEndText: "Se, al turno di un giocatore, non restano caselle libere legali nella riga/colonna richiesta, la partita termina immediatamente. Vince chi ha il punteggio più alto in quel momento.",
+      ruleFirstText: "Chi inizia può scegliere qualsiasi casella.",
+      ruleAltLabel: "Poi:",
+      ruleAltText: "Ogni nuova scelta deve essere allineata con la precedente — prima nella stessa colonna, poi nella stessa riga, poi di nuovo nella colonna, alternando a ogni turno.",
+      ruleClaimLabel: "Punteggio:",
+      ruleClaimText: "Quando scegli una casella, il suo numero si aggiunge al tuo punteggio e la casella esce dal gioco.",
+      ruleEndLabel: "Fine della partita:",
+      ruleEndText: "Se chi deve muovere non ha caselle libere nella riga o colonna richiesta, la partita finisce lì. Vince il punteggio più alto.",
       ruleDiffLabel: "Difficoltà:",
-      ruleDiffText: "Facile sceglie a caso, Medio prende sempre il numero legale più alto, Difficile pianifica diverse mosse in anticipo.",
+      ruleDiffText: "Facile sceglie a caso. Medio prende sempre il numero più grande possibile. Difficile pianifica diverse mosse in anticipo.",
       ruleHintLabel: "Suggerimento:",
-      ruleHintText: "Nel tuo turno, premi Suggerimento per evidenziare la mossa consigliata dalla stessa logica di ricerca approfondita usata dal livello Difficile.",
+      ruleHintText: "In difficoltà? Premi Suggerimento e il gioco ti indicherà la mossa migliore — la stessa logica del livello Difficile.",
+      ruleKeysLabel: "Tastiera:",
+      ruleKeysText: "Puoi giocare anche con le frecce — muoviti sulla griglia e premi Invio per scegliere.",
       closeRulesBtn: "Ho capito",
-      moveLogTitle: "Registro mosse"
+      moveLogTitle: "Registro mosse",
+      statsWins: "Vittorie",
+      statsLosses: "Sconfitte",
+      statsTies: "Pareggi"
     },
     fr: {
       subtitle: "Un jeu de stratégie sur grille numérique contre l'ordinateur",
@@ -394,6 +552,8 @@
       settingsBtn: "Paramètres",
       settingsTitle: "Paramètres",
       languageLabel: "Langue",
+      whoStartsLabel: "Qui commence ?",
+      random: "Aléatoire",
       soundLabel: "Effets sonores",
       closeSettingsBtn: "Terminé",
       showMoveLogLabel: "Afficher le journal des coups",
@@ -402,7 +562,7 @@
       vs: "contre",
       statusPickBegin: "Choisissez une case pour commencer.",
       statusYourTurn: "À vous — choisissez un numéro dans la {constraint} surlignée.",
-      statusComputerThinking: "L'ordinateur réfléchit...",
+      statusComputerThinking: "L'ordinateur réfléchit",
       row: "ligne",
       column: "colonne",
       boardBadge: "Grille : {size}x{size}",
@@ -417,22 +577,27 @@
       reasonDeadEnd: "Aucun coup légal ne reste dans la ligne/colonne requise.",
       playAgainBtn: "Rejouer",
       rulesModalTitle: "Comment jouer",
-      ruleBoardLabel: "Grille :",
-      ruleBoardText: "Une grille (6×6, 8×8 ou 10×10, au choix) contient les nombres de 1 au total des cases, mélangés au hasard.",
+      ruleBoardLabel: "La grille :",
+      ruleBoardText: "Chaque case contient un nombre, de 1 jusqu'au total des cases. Les grands nombres rapportent plus de points.",
       ruleFirstLabel: "Premier coup :",
-      ruleFirstText: "Vous commencez et pouvez choisir n'importe quelle case.",
-      ruleAltLabel: "Contrainte alternée :",
-      ruleAltText: "Ensuite, chaque choix doit provenir de la même colonne que la dernière case choisie, puis de la même ligne, puis à nouveau de la colonne — en alternant à chaque tour.",
-      ruleClaimLabel: "Acquisition :",
-      ruleClaimText: "Chaque case choisie est retirée du jeu et sa valeur s'ajoute au score du joueur.",
+      ruleFirstText: "Le premier joueur peut choisir n'importe quelle case.",
+      ruleAltLabel: "Ensuite :",
+      ruleAltText: "Chaque nouveau choix doit s'aligner sur le précédent — d'abord dans la même colonne, puis dans la même ligne, puis à nouveau dans la colonne, en alternance.",
+      ruleClaimLabel: "Score :",
+      ruleClaimText: "Quand vous choisissez une case, son nombre s'ajoute à votre score et la case sort du jeu.",
       ruleEndLabel: "Fin de partie :",
-      ruleEndText: "Si, au tour d'un joueur, aucune case libre légale ne reste dans la ligne/colonne requise, la partie se termine immédiatement. Celui qui a le score le plus élevé à ce moment-là gagne.",
+      ruleEndText: "Si le joueur qui doit jouer n'a plus de case libre dans la ligne ou la colonne requise, la partie s'arrête là. Le score le plus élevé gagne.",
       ruleDiffLabel: "Difficulté :",
-      ruleDiffText: "Facile choisit au hasard, Moyen prend toujours le nombre légal le plus élevé, Difficile réfléchit plusieurs coups à l'avance.",
+      ruleDiffText: "Facile choisit au hasard. Moyen prend toujours le plus grand nombre possible. Difficile prévoit plusieurs coups à l'avance.",
       ruleHintLabel: "Indice :",
-      ruleHintText: "À votre tour, appuyez sur Indice pour surligner le coup recommandé par la même recherche approfondie que celle utilisée par le niveau Difficile.",
+      ruleHintText: "Bloqué ? Appuyez sur Indice et le jeu vous proposera votre meilleur coup — la même logique que le niveau Difficile.",
+      ruleKeysLabel: "Clavier :",
+      ruleKeysText: "Vous pouvez aussi jouer avec les flèches — déplacez-vous sur la grille et appuyez sur Entrée pour choisir.",
       closeRulesBtn: "Compris",
-      moveLogTitle: "Journal des coups"
+      moveLogTitle: "Journal des coups",
+      statsWins: "Victoires",
+      statsLosses: "Défaites",
+      statsTies: "Nuls"
     },
     es: {
       subtitle: "Un juego de estrategia en cuadrícula numérica contra el ordenador",
@@ -444,6 +609,8 @@
       settingsBtn: "Ajustes",
       settingsTitle: "Ajustes",
       languageLabel: "Idioma",
+      whoStartsLabel: "¿Quién empieza?",
+      random: "Aleatorio",
       soundLabel: "Efectos de sonido",
       closeSettingsBtn: "Hecho",
       showMoveLogLabel: "Mostrar registro de movimientos",
@@ -452,7 +619,7 @@
       vs: "contra",
       statusPickBegin: "Elige cualquier casilla para empezar.",
       statusYourTurn: "Tu turno — elige un número de la {constraint} resaltada.",
-      statusComputerThinking: "El ordenador está pensando...",
+      statusComputerThinking: "El ordenador está pensando",
       row: "fila",
       column: "columna",
       boardBadge: "Tablero: {size}x{size}",
@@ -467,22 +634,27 @@
       reasonDeadEnd: "No quedan movimientos legales en la fila/columna requerida.",
       playAgainBtn: "Jugar de nuevo",
       rulesModalTitle: "Cómo jugar",
-      ruleBoardLabel: "Tablero:",
-      ruleBoardText: "Un tablero (6×6, 8×8 o 10×10, a tu elección) contiene los números del 1 al total de casillas, mezclados al azar.",
+      ruleBoardLabel: "El tablero:",
+      ruleBoardText: "Cada casilla contiene un número, del 1 hasta el total de casillas. Los números grandes valen más puntos.",
       ruleFirstLabel: "Primer movimiento:",
-      ruleFirstText: "Tú empiezas y puedes elegir cualquier casilla.",
-      ruleAltLabel: "Restricción alterna:",
-      ruleAltText: "Después, cada elección debe provenir de la misma columna que la última casilla elegida, luego de la misma fila, luego de nuevo de la columna, alternando en cada turno.",
-      ruleClaimLabel: "Reclamar:",
-      ruleClaimText: "Cada casilla elegida se retira del juego y su valor se suma a la puntuación de ese jugador.",
-      ruleEndLabel: "Fin de la partida:",
-      ruleEndText: "Si, en el turno de un jugador, no quedan casillas libres legales en la fila/columna requerida, la partida termina de inmediato. Gana quien tenga la puntuación más alta en ese momento.",
+      ruleFirstText: "Quien empieza puede elegir cualquier casilla.",
+      ruleAltLabel: "Después:",
+      ruleAltText: "Cada nueva elección debe alinearse con la anterior — primero en la misma columna, luego en la misma fila, luego otra vez en la columna, alternando.",
+      ruleClaimLabel: "Puntuación:",
+      ruleClaimText: "Al elegir una casilla, su número se suma a tu puntuación y la casilla sale del juego.",
+      ruleEndLabel: "Final de la partida:",
+      ruleEndText: "Si a quien le toca mover no le queda ninguna casilla libre en la fila o columna requerida, la partida termina ahí. Gana la puntuación más alta.",
       ruleDiffLabel: "Dificultad:",
-      ruleDiffText: "Fácil elige al azar, Medio siempre toma el número legal más alto, Difícil piensa varios movimientos por adelantado.",
+      ruleDiffText: "Fácil elige al azar. Medio siempre toma el número más grande posible. Difícil planifica varios movimientos por adelantado.",
       ruleHintLabel: "Pista:",
-      ruleHintText: "En tu turno, pulsa Pista para resaltar el movimiento que recomienda la misma búsqueda profunda que usa el nivel Difícil.",
+      ruleHintText: "¿Atascado? Pulsa Pista y el juego te sugerirá tu mejor jugada — la misma lógica del nivel Difícil.",
+      ruleKeysLabel: "Teclado:",
+      ruleKeysText: "También puedes jugar con las flechas — muévete por el tablero y pulsa Intro para elegir.",
       closeRulesBtn: "Entendido",
-      moveLogTitle: "Registro de movimientos"
+      moveLogTitle: "Registro de movimientos",
+      statsWins: "Victorias",
+      statsLosses: "Derrotas",
+      statsTies: "Empates"
     }
   };
 
@@ -511,10 +683,33 @@
     else currentLang = detectLanguage();
     if(stored && typeof stored.sound === 'boolean') soundOn = stored.sound;
     if(stored && typeof stored.showMoveLog === 'boolean') showMoveLog = stored.showMoveLog;
+    if(stored && ['player','computer','random'].includes(stored.starter)) starterMode = stored.starter;
   }
 
   function saveSettings(){
-    try{ localStorage.setItem('gridDuelSettings', JSON.stringify({lang:currentLang, sound:soundOn, showMoveLog:showMoveLog})); }catch(e){}
+    try{ localStorage.setItem('gridDuelSettings', JSON.stringify({lang:currentLang, sound:soundOn, showMoveLog:showMoveLog, starter:starterMode})); }catch(e){}
+  }
+
+  function loadStats(){
+    try{
+      const s = JSON.parse(localStorage.getItem('gridDuelStats')||'null');
+      if(s && typeof s.wins==='number' && typeof s.losses==='number' && typeof s.ties==='number') stats = s;
+    }catch(e){}
+  }
+
+  function saveStats(){
+    try{ localStorage.setItem('gridDuelStats', JSON.stringify(stats)); }catch(e){}
+  }
+
+  function renderStats(){
+    const el = document.getElementById('stats-line');
+    if(!el) return;
+    const total = stats.wins + stats.losses + stats.ties;
+    if(total === 0){ el.style.display='none'; return; }
+    el.style.display='';
+    el.textContent = '🏆 ' + t('statsWins') + ': ' + stats.wins +
+      ' · ' + t('statsLosses') + ': ' + stats.losses +
+      ' · ' + t('statsTies') + ': ' + stats.ties;
   }
 
   function applyMoveLogVisibility(){
@@ -532,17 +727,22 @@
       ['ruleClaimLabel','ruleClaimText'],
       ['ruleEndLabel','ruleEndText'],
       ['ruleDiffLabel','ruleDiffText'],
-      ['ruleHintLabel','ruleHintText']
+      ['ruleHintLabel','ruleHintText'],
+      ['ruleKeysLabel','ruleKeysText']
     ];
     body.innerHTML = rows.map(([l,tx])=>`<p><strong>${t(l)}</strong> ${t(tx)}</p>`).join('');
+  }
+
+  function constraintLabel(){
+    return t(nextConstraint) + (nextConstraint==='column' ? ' ↓' : ' →');
   }
 
   function refreshStatusText(){
     if(!gameActive) return;
     if(currentTurn==='computer'){
-      setStatus(t('statusComputerThinking'));
+      setStatus(t('statusComputerThinking'), true);
     } else {
-      setStatus(lastMove ? t('statusYourTurn',{constraint:t(nextConstraint)}) : t('statusPickBegin'));
+      setStatus(lastMove ? t('statusYourTurn',{constraint:constraintLabel()}) : t('statusPickBegin'));
     }
   }
 
@@ -552,6 +752,7 @@
       el.textContent = t(el.getAttribute('data-i18n'));
     });
     renderRulesBody();
+    renderStats();
     const diffLabelEl = document.getElementById('diff-label');
     if(diffLabelEl) diffLabelEl.textContent = t(difficulty);
     const sizeBadgeEl = document.getElementById('size-badge');
@@ -626,6 +827,7 @@
         const el=cellEls[r][c];
         el.classList.remove('valid');
         el.classList.remove('hint');
+        el.classList.remove('lane');
         el.classList.toggle('claimed-player', claimed[r][c]==='player');
         el.classList.toggle('claimed-computer', claimed[r][c]==='computer');
       }
@@ -634,6 +836,15 @@
 
   function highlightValidMoves(){
     getValidMoves().forEach(m=>cellEls[m.row][m.col].classList.add('valid'));
+  }
+
+  function highlightLane(){
+    if(!lastMove) return;
+    if(nextConstraint==='column'){
+      for(let r=0;r<boardSize;r++) cellEls[r][lastMove.col].classList.add('lane');
+    } else {
+      for(let c=0;c<boardSize;c++) cellEls[lastMove.row][c].classList.add('lane');
+    }
   }
 
   function animateClaim(row,col){
@@ -648,16 +859,88 @@
     setTimeout(()=>el.classList.remove('shake'),300);
   }
 
-  function setStatus(msg){
-    document.getElementById('status-msg').textContent=msg;
+  function floatScore(row,col,value,player){
+    const cell=cellEls[row][col];
+    if(!cell) return;
+    const s=document.createElement('span');
+    s.className='score-float '+player;
+    s.textContent='+'+value;
+    cell.appendChild(s);
+    setTimeout(()=>{ if(s.parentNode) s.parentNode.removeChild(s); },900);
+  }
+
+  function setStatus(msg, thinking){
+    const el=document.getElementById('status-msg');
+    el.textContent=msg;
+    el.classList.toggle('thinking', !!thinking);
+  }
+
+  function animateNumber(el, to){
+    const from = parseInt(el.textContent,10) || 0;
+    if(from===to){ el.textContent=to; return; }
+    if(typeof requestAnimationFrame!=='function' || typeof performance==='undefined'){
+      el.textContent=to; return;
+    }
+    const dur=450, start=performance.now();
+    function step(now){
+      const p=Math.min(1,(now-start)/dur);
+      const eased=1-Math.pow(1-p,3);
+      el.textContent=Math.round(from+(to-from)*eased);
+      if(p<1) requestAnimationFrame(step);
+      else el.textContent=to;
+    }
+    requestAnimationFrame(step);
   }
 
   function updateScores(){
-    document.getElementById('player-score').textContent=playerScore;
-    document.getElementById('computer-score').textContent=computerScore;
+    animateNumber(document.getElementById('player-score'), playerScore);
+    animateNumber(document.getElementById('computer-score'), computerScore);
     document.getElementById('player-card').classList.toggle('active-turn', currentTurn==='player' && gameActive);
     document.getElementById('computer-card').classList.toggle('active-turn', currentTurn==='computer' && gameActive);
   }
+
+  // ---------- keyboard ----------
+  function clearKbFocus(){
+    if(kbFocus && cellEls[kbFocus.row] && cellEls[kbFocus.row][kbFocus.col]){
+      cellEls[kbFocus.row][kbFocus.col].classList.remove('kb-focus');
+    }
+    kbFocus=null;
+  }
+
+  function setKbFocus(r,c){
+    if(kbFocus && cellEls[kbFocus.row] && cellEls[kbFocus.row][kbFocus.col]){
+      cellEls[kbFocus.row][kbFocus.col].classList.remove('kb-focus');
+    }
+    kbFocus={row:r,col:c};
+    cellEls[r][c].classList.add('kb-focus');
+  }
+
+  document.addEventListener('keydown',(e)=>{
+    if(!gameActive || currentTurn!=='player') return;
+    const gs=document.getElementById('game-screen');
+    if(!gs.classList.contains('active')) return;
+    if(document.getElementById('overlay').classList.contains('active')) return;
+    const k=e.key;
+    if(k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight'){
+      e.preventDefault();
+      let r,c;
+      if(kbFocus){
+        r=kbFocus.row; c=kbFocus.col;
+        if(k==='ArrowUp') r=Math.max(0,r-1);
+        if(k==='ArrowDown') r=Math.min(boardSize-1,r+1);
+        if(k==='ArrowLeft') c=Math.max(0,c-1);
+        if(k==='ArrowRight') c=Math.min(boardSize-1,c+1);
+      } else {
+        r=lastMove?lastMove.row:Math.floor(boardSize/2);
+        c=lastMove?lastMove.col:Math.floor(boardSize/2);
+      }
+      setKbFocus(r,c);
+    } else if(k==='Enter'||k===' '){
+      if(kbFocus){ e.preventDefault(); handleCellClick(kbFocus.row,kbFocus.col); }
+    } else if(k==='h'||k==='H'){
+      triggerHint();
+    }
+  });
 
   // ---------- game flow ----------
   function handleCellClick(row,col){
@@ -678,12 +961,14 @@
     lastMove={row,col};
     nextConstraint=(nextConstraint==='column')?'row':'column';
     currentTurn = player==='player' ? 'computer' : 'player';
+    clearKbFocus();
     refreshBoardClasses();
     markLastMove(row,col);
     animateClaim(row,col);
+    floatScore(row,col,value,player);
     logMove(player,value);
     updateScores();
-    playSound('claim');
+    playSound(player==='player'?'claimPlayer':'claimComputer');
     checkGameState();
   }
 
@@ -714,12 +999,15 @@
       return;
     }
     refreshBoardClasses();
+    if(lastMoveEl) lastMoveEl.classList.add('last-move');
     updateScores();
     if(currentTurn==='computer'){
-      setStatus(t('statusComputerThinking'));
-      setTimeout(computerMove,550);
+      setStatus(t('statusComputerThinking'), true);
+      const myId=gameId;
+      setTimeout(()=>{ if(myId===gameId) computerMove(); },550);
     } else {
-      setStatus(lastMove ? t('statusYourTurn',{constraint:t(nextConstraint)}) : t('statusPickBegin'));
+      setStatus(lastMove ? t('statusYourTurn',{constraint:constraintLabel()}) : t('statusPickBegin'));
+      highlightLane();
       highlightValidMoves();
     }
   }
@@ -728,16 +1016,65 @@
     gameActive=false;
     document.getElementById('final-player').textContent=playerScore;
     document.getElementById('final-computer').textContent=computerScore;
-    let title;
-    if(playerScore>computerScore) title=t('youWin');
-    else if(computerScore>playerScore) title=t('computerWins');
-    else title=t('tie');
-    document.getElementById('end-title').textContent=title;
+    let title, emoji;
+    if(playerScore>computerScore){ title=t('youWin'); emoji='🏆 '; stats.wins++; }
+    else if(computerScore>playerScore){ title=t('computerWins'); emoji='🤖 '; stats.losses++; }
+    else { title=t('tie'); emoji='🤝 '; stats.ties++; }
+    saveStats();
+    renderStats();
+    document.getElementById('end-title').textContent=emoji+title;
     document.getElementById('end-reason').textContent=reason;
     showModal('end-modal');
     refreshBoardClasses();
+    if(lastMoveEl) lastMoveEl.classList.add('last-move');
     updateScores();
     playSound(playerScore>computerScore?'win':(computerScore>playerScore?'lose':'tie'));
+    if(playerScore>computerScore) launchConfetti();
+  }
+
+  // ---------- confetti ----------
+  function launchConfetti(){
+    if(typeof requestAnimationFrame!=='function') return;
+    const cv=document.createElement('canvas');
+    if(!cv.getContext) return;
+    const ctx=cv.getContext('2d');
+    if(!ctx) return;
+    cv.id='confetti-canvas';
+    cv.width=window.innerWidth; cv.height=window.innerHeight;
+    document.body.appendChild(cv);
+    const colors=['#38bdf8','#8b5cf6','#f472b6','#facc15','#34d399','#fb7185'];
+    const parts=[];
+    for(let i=0;i<140;i++){
+      parts.push({
+        x:Math.random()*cv.width,
+        y:-20-Math.random()*cv.height*0.3,
+        vx:(Math.random()-0.5)*2.4,
+        vy:2+Math.random()*3.5,
+        size:5+Math.random()*5,
+        color:colors[Math.floor(Math.random()*colors.length)],
+        rot:Math.random()*Math.PI*2,
+        vr:(Math.random()-0.5)*0.25
+      });
+    }
+    const start=performance.now();
+    function frame(now){
+      const elapsed=now-start;
+      ctx.clearRect(0,0,cv.width,cv.height);
+      const fade=elapsed>2000 ? Math.max(0,1-(elapsed-2000)/600) : 1;
+      ctx.globalAlpha=fade;
+      parts.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=0.02;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle=p.color;
+        ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+        ctx.restore();
+      });
+      if(elapsed<2600){ requestAnimationFrame(frame); }
+      else if(cv.parentNode){ cv.parentNode.removeChild(cv); }
+    }
+    requestAnimationFrame(frame);
   }
 
   // ---------- AI ----------
@@ -851,6 +1188,16 @@
     return bestMove;
   }
 
+  function triggerHint(){
+    if(!gameActive || currentTurn!=='player') return;
+    const moves=getValidMoves();
+    if(moves.length===0) return;
+    const hint=getHintMove(moves);
+    document.querySelectorAll('.cell.hint').forEach(el=>el.classList.remove('hint'));
+    cellEls[hint.row][hint.col].classList.add('hint');
+    playSound('hint');
+  }
+
   // ---------- sound ----------
   function ensureAudio(){
     if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -874,11 +1221,22 @@
   function playSound(kind){
     if(!soundOn) return;
     switch(kind){
-      case 'claim': playTone(520,0.1,'triangle',0.15); break;
-      case 'invalid': playTone(140,0.15,'sawtooth',0.12); break;
-      case 'win': [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,'triangle',0.15),i*120)); break;
-      case 'lose': [400,300,220].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sawtooth',0.12),i*150)); break;
-      case 'tie': [400,400].forEach((f,i)=>setTimeout(()=>playTone(f,0.15,'sine',0.13),i*180)); break;
+      case 'claimPlayer':
+        playTone(523,0.09,'triangle',0.14);
+        setTimeout(()=>playTone(659,0.1,'triangle',0.12),70);
+        break;
+      case 'claimComputer':
+        playTone(392,0.09,'triangle',0.12);
+        setTimeout(()=>playTone(330,0.1,'triangle',0.1),70);
+        break;
+      case 'invalid': playTone(130,0.14,'sawtooth',0.1); break;
+      case 'hint':
+        playTone(880,0.08,'sine',0.1);
+        setTimeout(()=>playTone(1175,0.1,'sine',0.09),80);
+        break;
+      case 'win': [523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,'triangle',0.15),i*110)); break;
+      case 'lose': [440,330,262,196].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sawtooth',0.1),i*150)); break;
+      case 'tie': [440,440].forEach((f,i)=>setTimeout(()=>playTone(f,0.15,'sine',0.13),i*180)); break;
     }
   }
 
@@ -890,15 +1248,19 @@
   }
 
   function startGame(){
+    gameId++;
     initBoardData();
     renderBoard();
     playerScore=0; computerScore=0;
-    lastMove=null; nextConstraint=null; lastMoveEl=null;
-    currentTurn='player';
+    lastMove=null; nextConstraint=null; lastMoveEl=null; kbFocus=null;
+    if(starterMode==='random') currentTurn = Math.random()<0.5 ? 'player' : 'computer';
+    else currentTurn = starterMode;
     gameActive=true;
     document.getElementById('diff-label').textContent = t(difficulty);
     document.getElementById('size-badge').textContent = t('boardBadge',{size:boardSize});
     document.getElementById('move-log').innerHTML = '';
+    document.getElementById('player-score').textContent='0';
+    document.getElementById('computer-score').textContent='0';
     applyMoveLogVisibility();
     showScreen('game-screen');
     updateScores();
@@ -949,14 +1311,7 @@
   document.getElementById('settings-btn-game').addEventListener('click', openSettings);
   document.getElementById('close-settings-btn').addEventListener('click', hideOverlay);
 
-  document.getElementById('hint-btn').addEventListener('click', ()=>{
-    if(!gameActive || currentTurn!=='player') return;
-    const moves=getValidMoves();
-    if(moves.length===0) return;
-    const hint=getHintMove(moves);
-    document.querySelectorAll('.cell.hint').forEach(el=>el.classList.remove('hint'));
-    cellEls[hint.row][hint.col].classList.add('hint');
-  });
+  document.getElementById('hint-btn').addEventListener('click', triggerHint);
 
   document.getElementById('sound-toggle').addEventListener('change', (e)=>{
     soundOn=e.target.checked;
@@ -969,6 +1324,11 @@
     applyMoveLogVisibility();
   });
 
+  document.getElementById('starter-select').addEventListener('change', (e)=>{
+    starterMode=e.target.value;
+    saveSettings();
+  });
+
   document.getElementById('language-select').addEventListener('change', (e)=>{
     currentLang=e.target.value;
     saveSettings();
@@ -977,11 +1337,14 @@
 
   // ---------- init ----------
   loadSettings();
+  loadStats();
   document.getElementById('language-select').value = currentLang;
+  document.getElementById('starter-select').value = starterMode;
   document.getElementById('sound-toggle').checked = soundOn;
   document.getElementById('movelog-toggle').checked = showMoveLog;
   applyTranslations();
   applyMoveLogVisibility();
+  renderStats();
 
 })();
 </script>
