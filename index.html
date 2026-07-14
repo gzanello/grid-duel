@@ -533,7 +533,7 @@
       ruleDiffLabel: "Difficulty:",
       ruleDiffText: "Easy picks at random. Medium always takes the biggest number it can. Hard plans several moves ahead. Expert searches even deeper and plays the endgame perfectly.",
       ruleHintLabel: "Hint:",
-      ruleHintText: "Stuck? Press Hint and the game will suggest your strongest move — the same brain Hard mode uses.",
+      ruleHintText: "Stuck? Press Hint and the game will suggest your strongest move — computed with the Expert-level search, whatever difficulty you're playing.",
       ruleUndoLabel: "Undo:",
       ruleUndoText: "Changed your mind? Undo takes back your last move, together with the computer's reply.",
       ruleTimerLabel: "Turn timer:",
@@ -600,7 +600,7 @@
       ruleDiffLabel: "Difficoltà:",
       ruleDiffText: "Facile sceglie a caso. Medio prende sempre il numero più grande possibile. Difficile pianifica diverse mosse in anticipo. Esperto cerca ancora più a fondo e gioca il finale in modo perfetto.",
       ruleHintLabel: "Suggerimento:",
-      ruleHintText: "In difficoltà? Premi Suggerimento e il gioco ti indicherà la mossa migliore — la stessa logica del livello Difficile.",
+      ruleHintText: "In difficoltà? Premi Suggerimento e il gioco ti indicherà la mossa migliore — calcolata con la ricerca del livello Esperto, qualunque sia la difficoltà.",
       ruleUndoLabel: "Annulla:",
       ruleUndoText: "Hai cambiato idea? Annulla ritira la tua ultima mossa, insieme alla risposta del computer.",
       ruleTimerLabel: "Timer per mossa:",
@@ -667,7 +667,7 @@
       ruleDiffLabel: "Difficulté :",
       ruleDiffText: "Facile choisit au hasard. Moyen prend toujours le plus grand nombre possible. Difficile prévoit plusieurs coups à l'avance. Expert cherche encore plus loin et joue la fin de partie parfaitement.",
       ruleHintLabel: "Indice :",
-      ruleHintText: "Bloqué ? Appuyez sur Indice et le jeu vous proposera votre meilleur coup — la même logique que le niveau Difficile.",
+      ruleHintText: "Bloqué ? Appuyez sur Indice et le jeu vous proposera votre meilleur coup — calculé avec la recherche du niveau Expert, quelle que soit la difficulté.",
       ruleUndoLabel: "Annuler :",
       ruleUndoText: "Vous changez d'avis ? Annuler reprend votre dernier coup, ainsi que la réponse de l'ordinateur.",
       ruleTimerLabel: "Chrono par coup :",
@@ -734,7 +734,7 @@
       ruleDiffLabel: "Dificultad:",
       ruleDiffText: "Fácil elige al azar. Medio siempre toma el número más grande posible. Difícil planifica varios movimientos por adelantado. Experto busca aún más profundo y juega el final de forma perfecta.",
       ruleHintLabel: "Pista:",
-      ruleHintText: "¿Atascado? Pulsa Pista y el juego te sugerirá tu mejor jugada — la misma lógica del nivel Difícil.",
+      ruleHintText: "¿Atascado? Pulsa Pista y el juego te sugerirá tu mejor jugada — calculada con la búsqueda del nivel Experto, sea cual sea la dificultad.",
       ruleUndoLabel: "Deshacer:",
       ruleUndoText: "¿Has cambiado de idea? Deshacer retira tu último movimiento, junto con la respuesta del ordenador.",
       ruleTimerLabel: "Temporizador:",
@@ -857,9 +857,10 @@
     refreshStatusText();
   }
 
-  function getDepthLimit(){
+  function getDepthLimit(mode){
+    const level = mode || difficulty;
     const base = boardSize<=6 ? 8 : (boardSize===8 ? 6 : 5);
-    if(difficulty!=='expert') return base;
+    if(level!=='expert') return base;
     if(!lastMove) return base; // opening move: base depth is plenty
     let remaining=0;
     for(let r=0;r<boardSize;r++) for(let c=0;c<boardSize;c++) if(!claimed[r][c]) remaining++;
@@ -1386,8 +1387,9 @@
     return bestMove;
   }
 
-  // Same search as the Hard AI, but evaluated from the player's side: picks
+  // Same search as the AI, but evaluated from the player's side: picks
   // the move that minimizes (computerScore - playerScore), i.e. best for the player.
+  // Always searches at Expert depth (incl. exact endgame solve), whatever the difficulty.
   function getHintMove(moves){
     const claimedBool=cloneClaimedBool();
     let bestScore=Infinity;
@@ -1398,7 +1400,7 @@
       claimedBool[m.row][m.col]=true;
       const newNc=(nextConstraint==='column')?'row':'column';
       const val=minimax(claimedBool,{row:m.row,col:m.col},newNc,
-        computerScore, playerScore+board[m.row][m.col], getDepthLimit()-1, true, alpha, beta);
+        computerScore, playerScore+board[m.row][m.col], getDepthLimit('expert')-1, true, alpha, beta);
       claimedBool[m.row][m.col]=false;
       if(val<bestScore){ bestScore=val; bestMove=m; }
       beta=Math.min(beta,val);
